@@ -1,0 +1,36 @@
+# ========================
+# Python / FastAPI
+# ========================
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+backend/.env
+
+# ========================
+# React Native
+# ========================
+frontend/node_modules/
+frontend/.expo/
+frontend/.expo-shared/
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/local.properties
+frontend/ios/Pods/
+frontend/ios/build/
+frontend/*.jsbundle
+frontend/.metro-cache/
+
+# ========================
+# 공통
+# ========================
+.DS_Store
+.env
+*.log
+.idea/
+.vscode/
+*.swp
