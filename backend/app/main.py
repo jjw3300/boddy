@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import recommendation
+from app.routers import recommendation, games
 
 app = FastAPI(
     title="Boddy API",
@@ -16,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(recommendation.router, prefix="/api/v1")
+app.include_router(games.router, prefix="/api/v1")
 
 
 @app.get("/health")

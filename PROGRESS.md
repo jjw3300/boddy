@@ -28,7 +28,7 @@
 - [x] Git 초기화 및 `.gitignore` 설정
 - [x] GitHub 레포 생성 및 연결 ([jjw3300/boddy](https://github.com/jjw3300/boddy))
 
-### F-01 보드게임 추천 (Q&A 필터링) — Phase 1
+### F-01 보드게임 추천 (Q&A 필터링) ✅ 완료
 - [x] BGG XML API2 연동 (`bgg_service.py`)
   - Hot 게임 50개 조회 후 상세 정보 일괄 요청
   - 필터 조건 적용 후 최대 20개 반환
@@ -39,22 +39,24 @@
   - `play_time` (short <30분 / medium 30~90분 / long >90분)
   - `game_type` (luck / dexterity / party / strategy) — BGG 메카닉·카테고리 ID 기반 자동 감지
 - [x] REST API 엔드포인트 (`POST /api/v1/recommendations`)
+- [x] 게임 상세 조회 API (`GET /api/v1/games/{bgg_id}`)
+- [x] 인메모리 TTL 캐시 (`cache.py`) — Hot 게임 30분 / 상세 정보 6시간
+- [x] BGG API 재시도 로직 — 지수 백오프, 최대 3회 재시도
 - [x] Q&A 5단계 흐름 화면 (`RecommendationScreen.tsx`)
-  - 인원 → 협력/경쟁 → 게임 유형 → 난이도 → 플레이 시간
+  - 인원 → 협력/경쟁 → 게임 유형(운빨🎰/피지컬🤸/파티🥳/뇌지컬🧠) → 난이도 → 시간
   - 진행바, 이전 버튼, 브라운/베이지 Boddy 디자인 적용
-- [x] 결과 목록 화면 (`ResultScreen.tsx`)
-  - 썸네일, 게임 유형 태그(운빨🎰 / 피지컬🤸 / 파티🥳 / 뇌지컬🧠), 인원·시간·난이도 표시
+- [x] 추천 결과 목록 화면 (`ResultScreen.tsx`)
+  - 썸네일, 게임 유형 태그, 인원·시간·난이도 표시
+  - 카드 클릭 → 상세 화면 이동
   - 결과 없을 때 빈 화면 처리
+- [x] 게임 상세 화면 (`GameDetailScreen.tsx`)
+  - 대형 썸네일, 태그 모음, 게임 설명(최대 1000자)
+  - 로딩/에러 상태 처리
+- [x] API URL 환경변수화 (`src/config.ts`)
 
 ---
 
 ## 남은 작업
-
-### F-01 보드게임 추천 — 마무리
-- [ ] 게임 상세 페이지 (게임 클릭 시 BGG 상세 정보 조회)
-- [ ] 추천 결과 캐싱 (BGG API 응답 느림 → Redis 또는 인메모리 캐시)
-- [ ] BGG API 재시도 로직 (타임아웃 대응)
-- [ ] 실기기/에뮬레이터 테스트 및 API URL 환경변수화
 
 ### F-02 플레이 기록 (Board Game Log)
 - [ ] Supabase 프로젝트 생성 및 연결
@@ -81,7 +83,6 @@
 - [ ] 네비게이션 설정 (React Navigation — 탭 + 스택)
 - [ ] 앱 아이콘 및 스플래시 화면 (Boddy 브랜딩)
 - [ ] Railway 배포 (백엔드)
-- [ ] 환경변수 관리 (.env, react-native-config)
 - [ ] F-01 Phase 2: LLM 자연어 추천 (앱 안정화 후)
 - [ ] Android / iOS 스토어 배포
 
@@ -96,9 +97,11 @@ BoardGame/
 │   │   ├── main.py                  # FastAPI 앱 진입점, CORS 설정
 │   │   ├── config.py                # 환경변수 (pydantic-settings)
 │   │   ├── routers/
-│   │   │   └── recommendation.py   # POST /api/v1/recommendations
+│   │   │   ├── recommendation.py   # POST /api/v1/recommendations
+│   │   │   └── games.py            # GET /api/v1/games/{bgg_id}
 │   │   ├── services/
-│   │   │   └── bgg_service.py      # BGG API 연동 + 필터·게임유형 감지
+│   │   │   ├── bgg_service.py      # BGG API 연동 + 캐시 + 재시도 + 필터
+│   │   │   └── cache.py            # 인메모리 TTL 캐시
 │   │   └── schemas/
 │   │       └── recommendation.py   # 요청/응답 Pydantic 모델
 │   ├── requirements.txt
@@ -108,11 +111,14 @@ BoardGame/
     ├── src/
     │   ├── screens/
     │   │   ├── RecommendationScreen.tsx  # Q&A 5단계 흐름
-    │   │   └── ResultScreen.tsx          # 추천 결과 목록
+    │   │   ├── ResultScreen.tsx          # 추천 결과 목록 (카드 클릭 가능)
+    │   │   └── GameDetailScreen.tsx      # 게임 상세 정보
     │   ├── api/
-    │   │   └── recommendation.ts         # fetchRecommendations()
-    │   └── types/
-    │       └── index.ts                  # 공통 타입 정의
+    │   │   ├── recommendation.ts         # fetchRecommendations()
+    │   │   └── games.ts                  # fetchGameDetail()
+    │   ├── types/
+    │   │   └── index.ts                  # 공통 타입 정의
+    │   └── config.ts                     # API Base URL
     ├── App.tsx
     └── package.json
 ```

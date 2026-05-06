@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { GameSummary, GameType, RecommendationResponse } from '../types';
+import GameDetailScreen from './GameDetailScreen';
 
 const COLORS = {
   bg: '#F5ECD7',
@@ -16,21 +17,20 @@ const COLORS = {
   primary: '#8B5E3C',
   text: '#3E2A1E',
   subtext: '#7A5C3A',
-  selected: '#C8860A',
   tag: '#E8D5B0',
 };
 
 const GAME_TYPE_LABEL: Record<GameType, { label: string; emoji: string; color: string }> = {
-  luck: { label: '운빨', emoji: '🎰', color: '#E07B54' },
+  luck:      { label: '운빨',   emoji: '🎰', color: '#E07B54' },
   dexterity: { label: '피지컬', emoji: '🤸', color: '#5BA85A' },
-  party: { label: '파티', emoji: '🥳', color: '#C8860A' },
-  strategy: { label: '뇌지컬', emoji: '🧠', color: '#5B7EC8' },
+  party:     { label: '파티',   emoji: '🥳', color: '#C8860A' },
+  strategy:  { label: '뇌지컬', emoji: '🧠', color: '#5B7EC8' },
 };
 
 const DIFFICULTY_LABEL: Record<string, string> = {
-  easy: '⭐ 쉬움',
+  easy:   '⭐ 쉬움',
   medium: '⭐⭐ 보통',
-  hard: '⭐⭐⭐ 어려움',
+  hard:   '⭐⭐⭐ 어려움',
 };
 
 function difficultyFromWeight(weight: number): string {
@@ -44,12 +44,12 @@ interface Props {
   onReset: () => void;
 }
 
-function GameCard({ game }: { game: GameSummary }) {
+function GameCard({ game, onPress }: { game: GameSummary; onPress: () => void }) {
   const typeInfo = game.game_type ? GAME_TYPE_LABEL[game.game_type] : null;
   const difficulty = DIFFICULTY_LABEL[difficultyFromWeight(game.weight)];
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
       {game.thumbnail ? (
         <Image source={{ uri: game.thumbnail }} style={styles.thumbnail} />
       ) : (
@@ -76,11 +76,23 @@ function GameCard({ game }: { game: GameSummary }) {
         </View>
         <Text style={styles.difficulty}>{difficulty}</Text>
       </View>
-    </View>
+      <Text style={styles.chevron}>›</Text>
+    </TouchableOpacity>
   );
 }
 
 export default function ResultScreen({ results, onReset }: Props) {
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  if (selectedId !== null) {
+    return (
+      <GameDetailScreen
+        bggId={selectedId}
+        onBack={() => setSelectedId(null)}
+      />
+    );
+  }
+
   if (results.total === 0) {
     return (
       <SafeAreaView style={styles.container}>
@@ -111,7 +123,9 @@ export default function ResultScreen({ results, onReset }: Props) {
       <FlatList
         data={results.games}
         keyExtractor={item => String(item.bgg_id)}
-        renderItem={({ item }) => <GameCard game={item} />}
+        renderItem={({ item }) => (
+          <GameCard game={item} onPress={() => setSelectedId(item.bgg_id)} />
+        )}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
@@ -149,6 +163,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.card,
     borderRadius: 16,
     overflow: 'hidden',
@@ -201,6 +216,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.subtext,
   },
+  chevron: {
+    fontSize: 24,
+    color: COLORS.subtext,
+    paddingRight: 14,
+  },
   emptyBox: {
     flex: 1,
     alignItems: 'center',
@@ -208,9 +228,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 40,
   },
-  emptyEmoji: {
-    fontSize: 56,
-  },
+  emptyEmoji: { fontSize: 56 },
   emptyText: {
     fontSize: 18,
     fontWeight: '700',

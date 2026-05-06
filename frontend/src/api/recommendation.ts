@@ -1,6 +1,5 @@
+import BASE_URL from '../config';
 import { RecommendationFilter, RecommendationResponse } from '../types';
-
-const BASE_URL = 'http://10.0.2.2:8000/api/v1'; // Android 에뮬레이터 → localhost 매핑
 
 export async function fetchRecommendations(
   filters: RecommendationFilter,
