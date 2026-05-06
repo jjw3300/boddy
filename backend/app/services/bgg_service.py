@@ -3,6 +3,7 @@ import httpx
 import xmltodict
 from app.config import settings
 from app.schemas.recommendation import GameSummary, RecommendationFilter
+from typing import Literal
 
 # BGG 복잡도(weight) 기준
 DIFFICULTY_RANGE = {
@@ -18,20 +19,30 @@ PLAY_TIME_RANGE = {
     "long": (90, 9999),
 }
 
-# 협력/경쟁 BGG 카테고리 ID
+# BGG 메카닉/카테고리 ID
 COOPERATIVE_MECHANIC_ID = "2023"  # Co-operative Play
+
+# game_type 판별용 BGG ID 매핑
+GAME_TYPE_MECHANIC_IDS = {
+    "luck": {"2072", "2661", "2041"},        # Dice Rolling, Push Your Luck, Roll / Spin and Move
+    "dexterity": {"2878"},                   # Dexterity (mechanic)
+}
+GAME_TYPE_CATEGORY_IDS = {
+    "dexterity": {"1107"},                   # Dexterity (category)
+    "party": {"1030"},                       # Party Game
+    "strategy": {"1015", "1009"},            # Strategy Game, Abstract Strategy
+}
 
 
 async def search_games(filters: RecommendationFilter) -> list[GameSummary]:
     """BGG API를 통해 필터 조건에 맞는 게임 목록을 반환."""
-    # BGG API는 직접 필터 검색을 지원하지 않아 인기 게임 목록에서 필터링
     raw_games = await _fetch_hot_games()
-    game_ids = [g["id"] for g in raw_games[:50]]  # 상위 50개 기준
+    game_ids = [g["id"] for g in raw_games[:50]]
 
     detailed_games = await _fetch_game_details(game_ids)
     filtered = _apply_filters(detailed_games, filters)
 
-    return filtered[:20]  # 최대 20개 반환
+    return filtered[:20]
 
 
 async def _fetch_hot_games() -> list[dict]:
@@ -69,7 +80,7 @@ async def _fetch_game_details(game_ids: list[str]) -> list[dict]:
                 items = [items]
 
             results.extend(items)
-            await asyncio.sleep(0.5)  # BGG API 요청 제한 방지
+            await asyncio.sleep(0.5)
 
     return results
 
@@ -79,7 +90,8 @@ def _apply_filters(games: list[dict], filters: RecommendationFilter) -> list[Gam
 
     for game in games:
         try:
-            summary = _parse_game(game)
+            detected_type = _detect_game_type(game)
+            summary = _parse_game(game, detected_type)
         except Exception:
             continue
 
@@ -104,12 +116,46 @@ def _apply_filters(games: list[dict], filters: RecommendationFilter) -> list[Gam
             if filters.play_style == "competitive" and is_coop:
                 continue
 
+        if filters.game_type is not None:
+            if detected_type != filters.game_type:
+                continue
+
         result.append(summary)
 
     return result
 
 
-def _parse_game(game: dict) -> GameSummary:
+def _detect_game_type(game: dict) -> Literal["luck", "dexterity", "party", "strategy"] | None:
+    """BGG 메카닉·카테고리 ID 기반으로 game_type을 추론."""
+    links = game.get("link", [])
+    if isinstance(links, dict):
+        links = [links]
+
+    mechanic_ids = {
+        link["@id"]
+        for link in links
+        if link.get("@type") == "boardgamemechanic"
+    }
+    category_ids = {
+        link["@id"]
+        for link in links
+        if link.get("@type") == "boardgamecategory"
+    }
+
+    # 우선순위: dexterity > party > luck > strategy
+    if mechanic_ids & GAME_TYPE_MECHANIC_IDS["dexterity"] or category_ids & GAME_TYPE_CATEGORY_IDS["dexterity"]:
+        return "dexterity"
+    if category_ids & GAME_TYPE_CATEGORY_IDS["party"]:
+        return "party"
+    if mechanic_ids & GAME_TYPE_MECHANIC_IDS["luck"]:
+        return "luck"
+    if category_ids & GAME_TYPE_CATEGORY_IDS["strategy"]:
+        return "strategy"
+
+    return None
+
+
+def _parse_game(game: dict, game_type=None) -> GameSummary:
     names = game.get("name", [])
     if isinstance(names, dict):
         names = [names]
@@ -128,7 +174,8 @@ def _parse_game(game: dict) -> GameSummary:
         max_players=int(game.get("maxplayers", {}).get("@value", 10) or 10),
         play_time=int(game.get("playingtime", {}).get("@value", 0) or 0),
         weight=round(weight, 2),
-        description=None,  # 목록에서는 description 생략
+        description=None,
+        game_type=game_type,
     )
 
 
