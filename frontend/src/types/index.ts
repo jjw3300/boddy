@@ -1,3 +1,9 @@
+export interface GameSearchResult {
+  bgg_id: number;
+  name: string;
+  year: string | null;
+}
+
 export type PlayStyle = 'cooperative' | 'competitive' | 'both';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type PlayTime = 'short' | 'medium' | 'long';

@@ -1,4 +1,5 @@
 import asyncio
+import urllib.parse
 import httpx
 import xmltodict
 from typing import Literal
@@ -44,6 +45,37 @@ async def search_games(filters: RecommendationFilter) -> list[GameSummary]:
     game_ids = [g["id"] for g in raw_games[:50]]
     detailed_games = await _fetch_game_details(game_ids)
     return _apply_filters(detailed_games, filters)[:20]
+
+
+async def search_games_by_name(query: str) -> list[dict]:
+    """BGG 게임 이름 검색 결과 반환 (최대 10개)."""
+    encoded = urllib.parse.quote(query)
+    url = f"{settings.bgg_api_base_url}/search?query={encoded}&type=boardgame"
+    data = await _get_with_retry(url)
+
+    items = data.get("items", {}).get("item", [])
+    if isinstance(items, dict):
+        items = [items]
+
+    results = []
+    for item in items[:10]:
+        name_data = item.get("name", {})
+        if isinstance(name_data, list):
+            name = next(
+                (n["@value"] for n in name_data if n.get("@type") == "primary"),
+                name_data[0]["@value"] if name_data else "Unknown",
+            )
+        elif isinstance(name_data, dict):
+            name = name_data.get("@value", "Unknown")
+        else:
+            name = "Unknown"
+
+        year_data = item.get("yearpublished", {})
+        year = year_data.get("@value") if isinstance(year_data, dict) else None
+
+        results.append({"bgg_id": int(item["@id"]), "name": name, "year": year})
+
+    return results
 
 
 async def fetch_game_detail(bgg_id: int) -> GameSummary | None:

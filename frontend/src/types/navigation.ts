@@ -17,6 +17,12 @@ export type TabParamList = {
   ToolkitTab: undefined;
 };
 
+export type LogStackParamList = {
+  LogList: undefined;
+  NewLog: undefined;
+  LogDetail: { logId: string };
+};
+
 export type RecommendStackNavProp = CompositeNavigationProp<
   NativeStackNavigationProp<RecommendStackParamList>,
   BottomTabNavigationProp<TabParamList>
