@@ -5,11 +5,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Animated,
 } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RecommendStackParamList } from '../types/navigation';
 import { RecommendationFilter, PlayStyle, Difficulty, PlayTime, GameType } from '../types';
 import { fetchRecommendations } from '../api/recommendation';
-import ResultScreen from './ResultScreen';
 
 const COLORS = {
   bg: '#F5ECD7',
@@ -18,7 +18,6 @@ const COLORS = {
   text: '#3E2A1E',
   subtext: '#7A5C3A',
   selected: '#C8860A',
-  selectedBg: '#FDF0D0',
   white: '#FFFDF5',
 };
 
@@ -65,7 +64,11 @@ const OPTIONS: Record<Step, OptionItem[]> = {
   ],
 };
 
-export default function RecommendationScreen() {
+interface Props {
+  navigation: NativeStackNavigationProp<RecommendStackParamList, 'Recommendation'>;
+}
+
+export default function RecommendationScreen({ navigation }: Props) {
   const [stepIndex, setStepIndex] = useState(0);
   const [filters, setFilters] = useState<RecommendationFilter>({
     player_count: null,
@@ -75,67 +78,34 @@ export default function RecommendationScreen() {
     play_time: null,
   });
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<Awaited<ReturnType<typeof fetchRecommendations>> | null>(null);
 
   const currentStep = STEPS[stepIndex];
-  const progress = (stepIndex / STEPS.length) * 100;
+  const progress = ((stepIndex + 1) / STEPS.length) * 100;
 
-  function handleSelect(value: string) {
+  async function handleSelect(value: string) {
     const updated = { ...filters };
 
-    if (currentStep === 'player_count') {
-      updated.player_count = parseInt(value, 10);
-    } else if (currentStep === 'play_style') {
-      updated.play_style = value as PlayStyle;
-    } else if (currentStep === 'game_type') {
-      updated.game_type = value as GameType;
-    } else if (currentStep === 'difficulty') {
-      updated.difficulty = value as Difficulty;
-    } else if (currentStep === 'play_time') {
-      updated.play_time = value as PlayTime;
-    }
+    if (currentStep === 'player_count') { updated.player_count = parseInt(value, 10); }
+    else if (currentStep === 'play_style') { updated.play_style = value as PlayStyle; }
+    else if (currentStep === 'game_type') { updated.game_type = value as GameType; }
+    else if (currentStep === 'difficulty') { updated.difficulty = value as Difficulty; }
+    else if (currentStep === 'play_time') { updated.play_time = value as PlayTime; }
 
     setFilters(updated);
 
     if (stepIndex < STEPS.length - 1) {
       setStepIndex(stepIndex + 1);
     } else {
-      submitFilters(updated);
+      setLoading(true);
+      try {
+        const data = await fetchRecommendations(updated);
+        navigation.navigate('Result', { results: data });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-
-  async function submitFilters(finalFilters: RecommendationFilter) {
-    setLoading(true);
-    try {
-      const data = await fetchRecommendations(finalFilters);
-      setResults(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function handleBack() {
-    if (stepIndex > 0) {
-      setStepIndex(stepIndex - 1);
-    }
-  }
-
-  function handleReset() {
-    setStepIndex(0);
-    setFilters({
-      player_count: null,
-      play_style: null,
-      game_type: null,
-      difficulty: null,
-      play_time: null,
-    });
-    setResults(null);
-  }
-
-  if (results) {
-    return <ResultScreen results={results} onReset={handleReset} />;
   }
 
   if (loading) {
@@ -151,25 +121,22 @@ export default function RecommendationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 상단 진행바 */}
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${progress}%` }]} />
       </View>
 
-      {/* 뒤로 가기 */}
-      {stepIndex > 0 && (
-        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-          <Text style={styles.backText}>← 이전</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        onPress={() => stepIndex > 0 ? setStepIndex(stepIndex - 1) : navigation.goBack()}
+        style={styles.backBtn}
+      >
+        <Text style={styles.backText}>← 이전</Text>
+      </TouchableOpacity>
 
-      {/* 질문 */}
       <View style={styles.questionBox}>
         <Text style={styles.stepLabel}>{stepIndex + 1} / {STEPS.length}</Text>
         <Text style={styles.question}>{QUESTIONS[currentStep]}</Text>
       </View>
 
-      {/* 선택지 */}
       <View style={styles.optionsContainer}>
         {OPTIONS[currentStep].map(option => (
           <TouchableOpacity
@@ -251,12 +218,8 @@ const styles = StyleSheet.create({
     elevation: 2,
     gap: 16,
   },
-  optionEmoji: {
-    fontSize: 30,
-  },
-  optionTextBox: {
-    flex: 1,
-  },
+  optionEmoji: { fontSize: 30 },
+  optionTextBox: { flex: 1 },
   optionLabel: {
     fontSize: 18,
     fontWeight: '700',
@@ -273,9 +236,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16,
   },
-  loadingEmoji: {
-    fontSize: 56,
-  },
+  loadingEmoji: { fontSize: 56 },
   loadingText: {
     fontSize: 18,
     color: COLORS.text,

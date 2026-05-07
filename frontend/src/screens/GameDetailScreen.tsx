@@ -9,6 +9,9 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { RecommendStackParamList } from '../types/navigation';
 import { GameSummary, GameType } from '../types';
 import { fetchGameDetail } from '../api/games';
 
@@ -18,16 +21,15 @@ const COLORS = {
   primary: '#8B5E3C',
   text: '#3E2A1E',
   subtext: '#7A5C3A',
-  selected: '#C8860A',
   tag: '#E8D5B0',
   divider: '#E0CBA8',
 };
 
 const GAME_TYPE_INFO: Record<GameType, { label: string; emoji: string; color: string }> = {
-  luck:       { label: '운빨',   emoji: '🎰', color: '#E07B54' },
-  dexterity:  { label: '피지컬', emoji: '🤸', color: '#5BA85A' },
-  party:      { label: '파티',   emoji: '🥳', color: '#C8860A' },
-  strategy:   { label: '뇌지컬', emoji: '🧠', color: '#5B7EC8' },
+  luck:      { label: '운빨',   emoji: '🎰', color: '#E07B54' },
+  dexterity: { label: '피지컬', emoji: '🤸', color: '#5BA85A' },
+  party:     { label: '파티',   emoji: '🥳', color: '#C8860A' },
+  strategy:  { label: '뇌지컬', emoji: '🧠', color: '#5B7EC8' },
 };
 
 function weightToStars(weight: number): string {
@@ -37,11 +39,12 @@ function weightToStars(weight: number): string {
 }
 
 interface Props {
-  bggId: number;
-  onBack: () => void;
+  navigation: NativeStackNavigationProp<RecommendStackParamList, 'GameDetail'>;
+  route: RouteProp<RecommendStackParamList, 'GameDetail'>;
 }
 
-export default function GameDetailScreen({ bggId, onBack }: Props) {
+export default function GameDetailScreen({ navigation, route }: Props) {
+  const { bggId } = route.params;
   const [game, setGame] = useState<GameSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,9 +58,8 @@ export default function GameDetailScreen({ bggId, onBack }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>← 뒤로</Text>
         </TouchableOpacity>
       </View>
@@ -73,7 +75,7 @@ export default function GameDetailScreen({ bggId, onBack }: Props) {
         <View style={styles.centerBox}>
           <Text style={styles.errorEmoji}>😢</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={onBack}>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => navigation.goBack()}>
             <Text style={styles.retryBtnText}>돌아가기</Text>
           </TouchableOpacity>
         </View>
@@ -81,7 +83,6 @@ export default function GameDetailScreen({ bggId, onBack }: Props) {
 
       {!loading && !error && game && (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* 썸네일 */}
           {game.thumbnail ? (
             <Image source={{ uri: game.thumbnail }} style={styles.thumbnail} resizeMode="contain" />
           ) : (
@@ -90,10 +91,8 @@ export default function GameDetailScreen({ bggId, onBack }: Props) {
             </View>
           )}
 
-          {/* 게임 이름 */}
           <Text style={styles.gameName}>{game.name}</Text>
 
-          {/* 태그 행 */}
           <View style={styles.tagRow}>
             {game.game_type && (
               <View style={[styles.tag, { backgroundColor: GAME_TYPE_INFO[game.game_type].color + '22' }]}>
@@ -115,7 +114,6 @@ export default function GameDetailScreen({ bggId, onBack }: Props) {
 
           <View style={styles.divider} />
 
-          {/* 게임 설명 */}
           <Text style={styles.sectionTitle}>게임 소개</Text>
           {game.description ? (
             <Text style={styles.description}>{game.description}</Text>
@@ -123,11 +121,8 @@ export default function GameDetailScreen({ bggId, onBack }: Props) {
             <Text style={styles.descriptionEmpty}>설명 정보가 없어요.</Text>
           )}
 
-          {/* BGG 링크 안내 */}
           <View style={styles.bggNote}>
-            <Text style={styles.bggNoteText}>
-              📋 BGG ID: {game.bgg_id}
-            </Text>
+            <Text style={styles.bggNoteText}>📋 BGG ID: {game.bgg_id}</Text>
           </View>
         </ScrollView>
       )}
@@ -136,42 +131,14 @@ export default function GameDetailScreen({ bggId, onBack }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 4,
-  },
-  backBtn: {
-    alignSelf: 'flex-start',
-    paddingVertical: 6,
-  },
-  backText: {
-    color: COLORS.subtext,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  centerBox: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    color: COLORS.subtext,
-    fontSize: 15,
-    marginTop: 8,
-  },
+  container: { flex: 1, backgroundColor: COLORS.bg },
+  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
+  backBtn: { alignSelf: 'flex-start', paddingVertical: 6 },
+  backText: { color: COLORS.subtext, fontSize: 15, fontWeight: '600' },
+  centerBox: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingText: { color: COLORS.subtext, fontSize: 15, marginTop: 8 },
   errorEmoji: { fontSize: 48 },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.text,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
+  errorText: { fontSize: 16, color: COLORS.text, fontWeight: '600', textAlign: 'center' },
   retryBtn: {
     backgroundColor: COLORS.primary,
     borderRadius: 12,
@@ -179,94 +146,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginTop: 8,
   },
-  retryBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    alignItems: 'center',
-  },
+  retryBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  content: { paddingHorizontal: 20, paddingBottom: 40, alignItems: 'center' },
   thumbnail: {
-    width: 200,
-    height: 200,
-    borderRadius: 16,
-    marginTop: 16,
-    marginBottom: 20,
+    width: 200, height: 200, borderRadius: 16,
+    marginTop: 16, marginBottom: 20,
   },
   thumbnailPlaceholder: {
-    width: 200,
-    height: 200,
-    borderRadius: 16,
+    width: 200, height: 200, borderRadius: 16,
     backgroundColor: COLORS.tag,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-    marginBottom: 20,
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 16, marginBottom: 20,
   },
   thumbnailEmoji: { fontSize: 64 },
   gameName: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 32,
+    fontSize: 24, fontWeight: '800', color: COLORS.text,
+    textAlign: 'center', marginBottom: 16, lineHeight: 32,
   },
   tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 20,
+    flexDirection: 'row', flexWrap: 'wrap',
+    justifyContent: 'center', gap: 8, marginBottom: 20,
   },
-  tag: {
-    backgroundColor: COLORS.tag,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-  },
-  tagText: {
-    fontSize: 13,
-    color: COLORS.subtext,
-    fontWeight: '600',
-  },
-  divider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: COLORS.divider,
-    marginBottom: 20,
-  },
+  tag: { backgroundColor: COLORS.tag, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 5 },
+  tagText: { fontSize: 13, color: COLORS.subtext, fontWeight: '600' },
+  divider: { width: '100%', height: 1, backgroundColor: COLORS.divider, marginBottom: 20 },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.text,
-    alignSelf: 'flex-start',
-    marginBottom: 10,
+    fontSize: 17, fontWeight: '700', color: COLORS.text,
+    alignSelf: 'flex-start', marginBottom: 10,
   },
-  description: {
-    fontSize: 15,
-    color: COLORS.text,
-    lineHeight: 24,
-    alignSelf: 'flex-start',
-  },
-  descriptionEmpty: {
-    fontSize: 14,
-    color: COLORS.subtext,
-    alignSelf: 'flex-start',
-  },
+  description: { fontSize: 15, color: COLORS.text, lineHeight: 24, alignSelf: 'flex-start' },
+  descriptionEmpty: { fontSize: 14, color: COLORS.subtext, alignSelf: 'flex-start' },
   bggNote: {
-    marginTop: 24,
-    backgroundColor: COLORS.tag,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    marginTop: 24, backgroundColor: COLORS.tag,
+    borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14,
     alignSelf: 'flex-start',
   },
-  bggNoteText: {
-    fontSize: 12,
-    color: COLORS.subtext,
-  },
+  bggNoteText: { fontSize: 12, color: COLORS.subtext },
 });
