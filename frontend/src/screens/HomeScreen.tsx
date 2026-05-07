@@ -1,23 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ImageBackground,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RecommendStackParamList } from '../types/navigation';
-
-const COLORS = {
-  bg: '#F5ECD7',
-  primary: '#8B5E3C',
-  text: '#3E2A1E',
-  subtext: '#7A5C3A',
-  card: '#E8D5B0',
-  white: '#FFFDF5',
-};
+import { COLORS, BLOCK_SHADOW, BLOCK_SHADOW_SM, RADIUS } from '../design';
+import { SearchIcon, BookIcon, MapPinIcon, WrenchIcon, DiceIcon } from '../components/Icon';
 
 interface Props {
   navigation: NativeStackNavigationProp<RecommendStackParamList, 'Home'>;
@@ -26,162 +12,243 @@ interface Props {
 export default function HomeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
-      {/* 로고 영역 */}
-      <View style={styles.logoArea}>
-        <View style={styles.logoBox}>
-          <Text style={styles.logoEmoji}>🎲</Text>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* 로고 블럭 */}
+        <View style={styles.logoArea}>
+          <View style={styles.logoBlock}>
+            <DiceIcon size={52} color={COLORS.textOnWood} fill={COLORS.textOnWood} />
+          </View>
+          <Text style={styles.appName}>Boddy</Text>
+          <Text style={styles.appSub}>보드게임 버디</Text>
         </View>
-        <Text style={styles.appName}>Boddy</Text>
-        <Text style={styles.appSubtitle}>보드게임 버디</Text>
-      </View>
 
-      {/* 메인 액션 */}
-      <View style={styles.actionArea}>
-        <TouchableOpacity
-          style={styles.mainBtn}
-          onPress={() => navigation.navigate('Recommendation')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.mainBtnEmoji}>🔍</Text>
-          <View>
-            <Text style={styles.mainBtnTitle}>게임 추천받기</Text>
-            <Text style={styles.mainBtnSub}>취향에 맞는 게임을 찾아드려요</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* 빠른 접근 카드들 */}
-        <View style={styles.quickRow}>
-          <View style={[styles.quickCard, styles.quickCardDisabled]}>
-            <Text style={styles.quickEmoji}>📖</Text>
-            <Text style={styles.quickLabel}>플레이 기록</Text>
-            <Text style={styles.quickSoon}>준비 중</Text>
-          </View>
-          <View style={[styles.quickCard, styles.quickCardDisabled]}>
-            <Text style={styles.quickEmoji}>📍</Text>
-            <Text style={styles.quickLabel}>카페 찾기</Text>
-            <Text style={styles.quickSoon}>준비 중</Text>
-          </View>
-          <View style={[styles.quickCard, styles.quickCardDisabled]}>
-            <Text style={styles.quickEmoji}>🎰</Text>
-            <Text style={styles.quickLabel}>도구 모음</Text>
-            <Text style={styles.quickSoon}>준비 중</Text>
-          </View>
+        {/* 메인 추천 블럭 버튼 */}
+        <View style={styles.mainBlockWrapper}>
+          <TouchableOpacity
+            style={styles.mainBlock}
+            onPress={() => navigation.navigate('Recommendation')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.mainBlockIcon}>
+              <SearchIcon size={36} color={COLORS.woodDark} fill={COLORS.woodLight} />
+            </View>
+            <View style={styles.mainBlockText}>
+              <Text style={styles.mainBlockTitle}>게임 추천받기</Text>
+              <Text style={styles.mainBlockSub}>취향에 맞는 게임을 찾아드려요</Text>
+            </View>
+          </TouchableOpacity>
+          {/* 블럭 바닥면 */}
+          <View style={styles.mainBlockBottom} />
         </View>
-      </View>
 
-      {/* 하단 문구 */}
-      <Text style={styles.footer}>오프라인 보드게임의 모든 것</Text>
+        {/* 빠른 접근 블럭 3개 */}
+        <Text style={styles.sectionLabel}>기능 모음</Text>
+        <View style={styles.quickGrid}>
+          {QUICK_ITEMS.map(item => (
+            <View key={item.label} style={styles.quickBlockWrapper}>
+              <View style={[styles.quickBlock, { backgroundColor: item.color }]}>
+                <item.Icon size={28} color={COLORS.woodDark} fill={item.iconFill} />
+                <Text style={styles.quickLabel}>{item.label}</Text>
+                <View style={styles.quickSoonBadge}>
+                  <Text style={styles.quickSoonText}>준비 중</Text>
+                </View>
+              </View>
+              <View style={[styles.quickBlockBottom, { backgroundColor: item.bottomColor }]} />
+            </View>
+          ))}
+        </View>
+
+        {/* 하단 문구 */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>🪵  나무처럼 따뜻하게, 게임처럼 즐겁게</Text>
+        </View>
+
+      </ScrollView>
     </SafeAreaView>
   );
 }
+
+const QUICK_ITEMS = [
+  {
+    label: '플레이\n기록',
+    Icon: BookIcon,
+    color: COLORS.woodLight,
+    bottomColor: COLORS.woodMid,
+    iconFill: COLORS.woodMid,
+  },
+  {
+    label: '카페\n찾기',
+    Icon: MapPinIcon,
+    color: '#B5D5A0',
+    bottomColor: '#6E9E55',
+    iconFill: '#6E9E55',
+  },
+  {
+    label: '도구\n모음',
+    Icon: WrenchIcon,
+    color: '#A8C8E8',
+    bottomColor: '#4A7FB5',
+    iconFill: '#4A7FB5',
+  },
+];
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.bg,
+  },
+  scroll: {
     paddingHorizontal: 24,
-    justifyContent: 'space-between',
-    paddingBottom: 32,
+    paddingBottom: 40,
   },
   logoArea: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 48,
+    marginBottom: 40,
   },
-  logoBox: {
-    width: 96,
-    height: 96,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary,
+  logoBlock: {
+    width: 100,
+    height: 100,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.wood,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  },
-  logoEmoji: {
-    fontSize: 48,
+    ...BLOCK_SHADOW,
+    borderWidth: 2,
+    borderColor: COLORS.woodDark,
   },
   appName: {
-    fontSize: 40,
+    fontSize: 44,
     fontWeight: '900',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
+    letterSpacing: 2,
+  },
+  appSub: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
     letterSpacing: 1,
-  },
-  appSubtitle: {
-    fontSize: 15,
-    color: COLORS.subtext,
     marginTop: 4,
-    fontWeight: '500',
   },
-  actionArea: {
-    gap: 16,
+
+  // 메인 버튼
+  mainBlockWrapper: {
+    marginBottom: 32,
   },
-  mainBtn: {
+  mainBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
+    backgroundColor: COLORS.wood,
+    borderRadius: RADIUS.lg,
     paddingVertical: 22,
     paddingHorizontal: 24,
     gap: 18,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    borderWidth: 2,
+    borderColor: COLORS.woodDark,
+    borderBottomWidth: 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    zIndex: 1,
   },
-  mainBtnEmoji: {
-    fontSize: 36,
+  mainBlockBottom: {
+    height: 8,
+    backgroundColor: COLORS.woodDark,
+    borderBottomLeftRadius: RADIUS.lg,
+    borderBottomRightRadius: RADIUS.lg,
+    borderWidth: 2,
+    borderTopWidth: 0,
+    borderColor: COLORS.woodDark,
   },
-  mainBtnTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.white,
+  mainBlockIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.woodLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.woodMid,
   },
-  mainBtnSub: {
+  mainBlockText: {
+    flex: 1,
+  },
+  mainBlockTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: COLORS.textOnWood,
+    marginBottom: 4,
+  },
+  mainBlockSub: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: 2,
+    color: 'rgba(255,250,240,0.8)',
+    fontWeight: '600',
   },
-  quickRow: {
+
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.textSecondary,
+    letterSpacing: 1.5,
+    marginBottom: 12,
+  },
+
+  // 빠른 접근 그리드
+  quickGrid: {
     flexDirection: 'row',
     gap: 12,
+    marginBottom: 40,
   },
-  quickCard: {
+  quickBlockWrapper: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    paddingVertical: 18,
+  },
+  quickBlock: {
     alignItems: 'center',
-    gap: 6,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    justifyContent: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 8,
+    borderRadius: RADIUS.md,
+    gap: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.12)',
+    borderBottomWidth: 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    opacity: 0.75,
   },
-  quickCardDisabled: {
-    opacity: 0.6,
-  },
-  quickEmoji: {
-    fontSize: 26,
+  quickBlockBottom: {
+    height: 6,
+    borderBottomLeftRadius: RADIUS.md,
+    borderBottomRightRadius: RADIUS.md,
+    opacity: 0.75,
   },
   quickLabel: {
     fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  quickSoon: {
-    fontSize: 10,
-    color: COLORS.subtext,
-    fontWeight: '500',
-  },
-  footer: {
+    fontWeight: '800',
+    color: COLORS.textPrimary,
     textAlign: 'center',
-    fontSize: 13,
-    color: COLORS.subtext,
+    lineHeight: 16,
+  },
+  quickSoonBadge: {
+    backgroundColor: 'rgba(0,0,0,0.12)',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  quickSoonText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+
+  footer: {
+    alignItems: 'center',
+    paddingTop: 8,
+  },
+  footerText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
   },
 });
