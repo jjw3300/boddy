@@ -23,6 +23,14 @@ export type LogStackParamList = {
   LogDetail: { logId: string };
 };
 
+export type ToolkitStackParamList = {
+  ToolkitHome: undefined;
+  Dice: undefined;
+  Coin: undefined;
+  Scoreboard: undefined;
+  FirstPlayer: undefined;
+};
+
 export type RecommendStackNavProp = CompositeNavigationProp<
   NativeStackNavigationProp<RecommendStackParamList>,
   BottomTabNavigationProp<TabParamList>

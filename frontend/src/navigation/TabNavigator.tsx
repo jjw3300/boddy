@@ -4,7 +4,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import { TabParamList } from '../types/navigation';
 import RecommendStack from './RecommendStack';
 import LogStack from './LogStack';
-import { CafeScreen, ToolkitScreen } from '../screens/PlaceholderScreen';
+import { CafeScreen } from '../screens/PlaceholderScreen';
+import ToolkitStack from './ToolkitStack';
 import { DiceIcon, BookIcon, MapPinIcon, WrenchIcon } from '../components/Icon';
 import { COLORS, RADIUS } from '../design';
 
@@ -102,7 +103,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen
         name="ToolkitTab"
-        component={ToolkitScreen}
+        component={ToolkitStack}
         options={{
           tabBarLabel: '도구',
           tabBarIcon: ({ focused }) => (

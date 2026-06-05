@@ -123,6 +123,46 @@ export function GamepadIcon({ size = 24, color = '#3D2314', fill = 'none' }: Ico
   );
 }
 
+// 동전 — 동전 던지기
+export function CoinIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="9" fill={fill} stroke={color} strokeWidth="2" />
+      <Circle cx="12" cy="12" r="6" stroke={color} strokeWidth="1.5" />
+      <Line x1="12" y1="7" x2="12" y2="9" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="12" y1="15" x2="12" y2="17" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// 트로피 — 점수판
+export function TrophyIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8 3H16V13C16 15.21 14.21 17 12 17C9.79 17 8 15.21 8 13V3Z"
+        fill={fill} stroke={color} strokeWidth="2" strokeLinejoin="round"
+      />
+      <Path d="M8 6H4C4 6 4 10 8 11" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Path d="M16 6H20C20 6 20 10 16 11" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="12" y1="17" x2="12" y2="20" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="8" y1="20" x2="16" y2="20" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// 손가락 — 선 정하기
+export function FingerIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3C12 3 12 3 12 3C10.9 3 10 3.9 10 5V13L8.5 11.5C7.9 10.9 6.9 10.9 6.3 11.5C5.7 12.1 5.7 13.1 6.3 13.7L10 18C10.9 19.2 12.3 20 14 20C16.8 20 19 17.8 19 15V8C19 6.9 18.1 6 17 6C16.6 6 16.3 6.1 16 6.3V6C16 4.9 15.1 4 14 4C13.6 4 13.3 4.1 13 4.3V5C13 3.9 12.6 3 12 3Z"
+        fill={fill} stroke={color} strokeWidth="1.8" strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 // 별 (즐겨찾기 / 평점)
 export function StarIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
   return (
