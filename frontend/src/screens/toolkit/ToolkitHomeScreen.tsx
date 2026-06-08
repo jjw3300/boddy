@@ -1,11 +1,12 @@
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
+  View, Text, StyleSheet, SafeAreaView, ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
-import { COLORS, BLOCK_SHADOW, RADIUS } from '../../design';
+import { COLORS, FONT, SPACING, BLOCK_SHADOW, RADIUS } from '../../design';
 import { DiceIcon, CoinIcon, TrophyIcon, FingerIcon, WrenchIcon } from '../../components/Icon';
+import { WoodButton } from '../../components/WoodButton';
 
 interface Props {
   navigation: NativeStackNavigationProp<ToolkitStackParamList, 'ToolkitHome'>;
@@ -16,7 +17,7 @@ interface ToolCard {
   desc: string;
   Icon: React.ComponentType<{ size?: number; color?: string; fill?: string }>;
   bg: string;
-  bottom: string;
+  bottomColor: string;
   iconColor: string;
   iconFill: string;
   route: keyof ToolkitStackParamList;
@@ -28,7 +29,7 @@ const TOOLS: ToolCard[] = [
     desc: '1~6면체 주사위를\n마음껏 굴려요',
     Icon: DiceIcon,
     bg: COLORS.woodLight,
-    bottom: COLORS.woodMid,
+    bottomColor: COLORS.woodDark,
     iconColor: COLORS.woodDark,
     iconFill: COLORS.wood,
     route: 'Dice',
@@ -38,8 +39,8 @@ const TOOLS: ToolCard[] = [
     desc: '앞면? 뒷면?\n운에 맡겨요',
     Icon: CoinIcon,
     bg: '#FFF0B0',
-    bottom: COLORS.paintYellow,
-    iconColor: '#8A6A00',
+    bottomColor: '#9A7A00',
+    iconColor: '#7A5A00',
     iconFill: '#FFE066',
     route: 'Coin',
   },
@@ -48,8 +49,8 @@ const TOOLS: ToolCard[] = [
     desc: '실시간 점수를\n함께 기록해요',
     Icon: TrophyIcon,
     bg: '#B5D5A0',
-    bottom: '#4E9E6B',
-    iconColor: '#2E5E3A',
+    bottomColor: '#2E6040',
+    iconColor: '#1E4828',
     iconFill: '#6EC98A',
     route: 'Scoreboard',
   },
@@ -58,8 +59,8 @@ const TOOLS: ToolCard[] = [
     desc: '누가 먼저?\n랜덤으로 정해요',
     Icon: FingerIcon,
     bg: '#F0B0A8',
-    bottom: COLORS.paintRed,
-    iconColor: '#8A2A1E',
+    bottomColor: '#8A2820',
+    iconColor: '#6A1A10',
     iconFill: '#F07870',
     route: 'FirstPlayer',
   },
@@ -67,97 +68,92 @@ const TOOLS: ToolCard[] = [
 
 export default function ToolkitHomeScreen({ navigation }: Props) {
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={s.container}>
+      {/* 헤더 */}
+      <View style={s.header}>
         <WrenchIcon size={24} color={COLORS.woodDark} fill={COLORS.woodMid} />
-        <Text style={styles.title}>도구 모음</Text>
+        <Text style={s.title}>도구 모음</Text>
       </View>
-      <Text style={styles.subtitle}>게임 중 필요한 모든 것</Text>
+      <Text style={s.subtitle}>게임 중 필요한 모든 것</Text>
 
-      <ScrollView
-        contentContainerStyle={styles.grid}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={s.grid} showsVerticalScrollIndicator={false}>
         {TOOLS.map(tool => (
-          <View key={tool.route} style={styles.cardWrapper}>
-            <TouchableOpacity
-              style={[styles.card, { backgroundColor: tool.bg }]}
-              onPress={() => navigation.navigate(tool.route as any)}
-              activeOpacity={0.82}
-            >
-              <View style={styles.iconArea}>
+          <WoodButton
+            key={tool.route}
+            onPress={() => navigation.navigate(tool.route as any)}
+            bg={tool.bg}
+            bottomColor={tool.bottomColor}
+            depth={7}
+            radius={RADIUS.lg}
+            style={s.cardSurface}
+          >
+            <View style={s.cardInner}>
+              <View style={s.iconArea}>
                 <tool.Icon size={44} color={tool.iconColor} fill={tool.iconFill} />
               </View>
-              <Text style={styles.cardLabel}>{tool.label}</Text>
-              <Text style={styles.cardDesc}>{tool.desc}</Text>
-            </TouchableOpacity>
-            <View style={[styles.cardBottom, { backgroundColor: tool.bottom }]} />
-          </View>
+              <Text style={[s.cardLabel, { color: tool.iconColor }]}>{tool.label}</Text>
+              <Text style={[s.cardDesc, { color: tool.iconColor }]}>{tool.desc}</Text>
+            </View>
+          </WoodButton>
         ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 4,
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xs,
   },
-  title: { fontSize: 24, fontWeight: '900', color: COLORS.textPrimary },
+  title: { ...FONT.h1, fontSize: 24 },
   subtitle: {
+    ...FONT.caption,
     fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-    paddingHorizontal: 24,
-    marginBottom: 20,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   grid: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xl,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: SPACING.md,
   },
-  cardWrapper: {
+  cardSurface: {
     width: '47%',
-    ...BLOCK_SHADOW,
-  },
-  card: {
-    borderRadius: RADIUS.lg,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    padding: 20,
-    paddingBottom: 22,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
     borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.1)',
-    borderBottomWidth: 0,
+    borderColor: 'rgba(0,0,0,0.08)',
+    // BLOCK_SHADOW는 WoodButton 외부에서 적용할 수 없으므로 elevation만
+    elevation: 4,
+    shadowColor: '#3D1A08',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+  },
+  cardInner: {
+    padding: SPACING.md,
+    paddingBottom: SPACING.md + 4,
     minHeight: 170,
     justifyContent: 'flex-end',
   },
-  cardBottom: {
-    height: 8,
-    borderBottomLeftRadius: RADIUS.lg,
-    borderBottomRightRadius: RADIUS.lg,
-  },
-  iconArea: {
-    marginBottom: 14,
-  },
+  iconArea: { marginBottom: SPACING.sm + 2 },
   cardLabel: {
     fontSize: 15,
     fontWeight: '900',
-    color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
   cardDesc: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.textSecondary,
     lineHeight: 18,
+    opacity: 0.8,
   },
 });

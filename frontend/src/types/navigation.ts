@@ -10,13 +10,6 @@ export type RecommendStackParamList = {
   GameDetail: { bggId: number };
 };
 
-export type TabParamList = {
-  RecommendTab: undefined;
-  LogTab: undefined;
-  CafeTab: undefined;
-  ToolkitTab: undefined;
-};
-
 export type LogStackParamList = {
   LogList: undefined;
   NewLog: undefined;
@@ -29,6 +22,22 @@ export type ToolkitStackParamList = {
   Coin: undefined;
   Scoreboard: undefined;
   FirstPlayer: undefined;
+};
+
+export type ProfileStackParamList = {
+  Profile: undefined;
+  EditProfile: undefined;
+  AppInfo: undefined;
+  DeleteAccount: undefined;
+  Login: undefined;
+};
+
+export type TabParamList = {
+  RecommendTab: undefined;
+  LogTab: undefined;
+  CafeTab: undefined;
+  ToolkitTab: undefined;
+  ProfileTab: undefined;
 };
 
 export type RecommendStackNavProp = CompositeNavigationProp<
