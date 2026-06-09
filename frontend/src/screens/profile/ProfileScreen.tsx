@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../../types/navigation';
-import { COLORS, FONT, SPACING, RADIUS, BLOCK_SHADOW, BLOCK_SHADOW_SM } from '../../design';
+import { COLORS, FONT, SPACING, RADIUS } from '../../design';
 import {
   UserIcon, BellIcon, InfoIcon, LogoutIcon, EditIcon,
   ChevronRightIcon, ShieldIcon,
@@ -43,59 +43,53 @@ export default function ProfileScreen({ navigation }: Props) {
         <Text style={s.pageTitle}>내 정보</Text>
 
         {/* 프로필 카드 */}
-        <View style={s.profileCardWrapper}>
-          <View style={s.profileCard}>
-            {/* 아바타 */}
-            <View style={s.avatarWrapper}>
-              {user?.profileImage ? (
-                <Image source={{ uri: user.profileImage }} style={s.avatarImg} />
-              ) : (
-                <View style={s.avatarBlock}>
-                  <UserIcon size={40} color={COLORS.woodLight} fill={COLORS.woodLight} />
-                </View>
-              )}
-            </View>
-
-            {/* 사용자 정보 */}
-            <View style={s.profileInfo}>
-              <Text style={s.nickname}>{user?.nickname ?? '게스트'}</Text>
-              {user?.email ? (
-                <Text style={s.email}>{user.email}</Text>
-              ) : isGuest ? (
-                <Text style={s.emailMuted}>로그인하면 더 많은 기능을 쓸 수 있어요</Text>
-              ) : null}
-              <View style={s.providerBadge}>
-                <Text style={s.providerText}>
-                  {user?.provider === 'kakao' ? '🟡 카카오 계정'
-                    : user?.provider === 'google' ? '🔵 Google 계정'
-                    : '👤 게스트'}
-                </Text>
+        <View style={s.profileCard}>
+          {/* 아바타 */}
+          <View style={s.avatarWrapper}>
+            {user?.profileImage ? (
+              <Image source={{ uri: user.profileImage }} style={s.avatarImg} />
+            ) : (
+              <View style={s.avatarBlock}>
+                <UserIcon size={40} color={COLORS.woodLight} fill={COLORS.woodLight} />
               </View>
-            </View>
-
-            {/* 프로필 수정 버튼 */}
-            {!isGuest && (
-              <TouchableOpacity
-                style={s.editBtn}
-                onPress={() => navigation.navigate('EditProfile')}
-                activeOpacity={0.7}
-              >
-                <EditIcon size={18} color={COLORS.woodMid} />
-              </TouchableOpacity>
             )}
           </View>
-          <View style={s.profileCardShadow} />
+
+          {/* 사용자 정보 */}
+          <View style={s.profileInfo}>
+            <Text style={s.nickname}>{user?.nickname ?? '게스트'}</Text>
+            {user?.email ? (
+              <Text style={s.email}>{user.email}</Text>
+            ) : isGuest ? (
+              <Text style={s.emailMuted}>로그인하면 더 많은 기능을 쓸 수 있어요</Text>
+            ) : null}
+            <View style={s.providerBadge}>
+              <Text style={s.providerText}>
+                {user?.provider === 'kakao' ? '🟡 카카오 계정'
+                  : user?.provider === 'google' ? '🔵 Google 계정'
+                  : '👤 게스트'}
+              </Text>
+            </View>
+          </View>
+
+          {/* 프로필 수정 버튼 */}
+          {!isGuest && (
+            <TouchableOpacity
+              style={s.editBtn}
+              onPress={() => navigation.navigate('EditProfile')}
+              activeOpacity={0.7}
+            >
+              <EditIcon size={18} color={COLORS.woodMid} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* 게스트일 때 로그인 유도 */}
         {isGuest && (
-          <View style={s.loginNudgeWrapper}>
-            <TouchableOpacity style={s.loginNudge} activeOpacity={0.85}
-              onPress={() => navigation.navigate('Login' as any)}>
-              <Text style={s.loginNudgeText}>로그인 / 회원가입 →</Text>
-            </TouchableOpacity>
-            <View style={s.loginNudgeShadow} />
-          </View>
+          <TouchableOpacity style={s.loginNudge} activeOpacity={0.85}
+            onPress={() => navigation.navigate('Login' as any)}>
+            <Text style={s.loginNudgeText}>로그인 / 회원가입 →</Text>
+          </TouchableOpacity>
         )}
 
         {/* 섹션: 설정 */}
@@ -164,10 +158,7 @@ function SectionHeader({ label }: { label: string }) {
 
 function SettingsCard({ children }: { children: React.ReactNode }) {
   return (
-    <View style={s.settingsCardWrapper}>
-      <View style={s.settingsCard}>{children}</View>
-      <View style={s.settingsCardShadow} />
-    </View>
+    <View style={s.settingsCard}>{children}</View>
   );
 }
 
@@ -223,33 +214,23 @@ const s = StyleSheet.create({
   },
 
   // 프로필 카드
-  profileCardWrapper: {
-    marginBottom: SPACING.lg,
-    ...BLOCK_SHADOW,
-  },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.cardLight,
     borderRadius: RADIUS.lg,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
     padding: SPACING.md,
     gap: SPACING.md,
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-    borderBottomWidth: 0,
+    borderWidth: 1.5,
+    borderColor: COLORS.cardBorder,
+    marginBottom: SPACING.lg,
+    shadowColor: '#3D1A08',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  profileCardShadow: {
-    height: 7,
-    backgroundColor: COLORS.woodLight,
-    borderBottomLeftRadius: RADIUS.lg,
-    borderBottomRightRadius: RADIUS.lg,
-    borderWidth: 2,
-    borderTopWidth: 0,
-    borderColor: COLORS.woodLight,
-  },
-  avatarWrapper: { ...BLOCK_SHADOW_SM },
+  avatarWrapper: {},
   avatarImg: {
     width: 64,
     height: 64,
@@ -287,26 +268,19 @@ const s = StyleSheet.create({
   },
 
   // 게스트 로그인 유도
-  loginNudgeWrapper: {
-    marginBottom: SPACING.lg,
-    ...BLOCK_SHADOW_SM,
-  },
   loginNudge: {
     backgroundColor: COLORS.wood,
     borderRadius: RADIUS.md,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
     paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: COLORS.woodDark,
-    borderBottomWidth: 0,
-  },
-  loginNudgeShadow: {
-    height: 6,
-    backgroundColor: COLORS.woodDeep,
-    borderBottomLeftRadius: RADIUS.md,
-    borderBottomRightRadius: RADIUS.md,
+    marginBottom: SPACING.lg,
+    shadowColor: '#3D1A08',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 3,
   },
   loginNudgeText: {
     ...FONT.bodyB,
@@ -324,25 +298,18 @@ const s = StyleSheet.create({
   },
 
   // 설정 카드
-  settingsCardWrapper: {
-    ...BLOCK_SHADOW_SM,
-    marginBottom: SPACING.xs,
-  },
   settingsCard: {
     backgroundColor: COLORS.cardLight,
     borderRadius: RADIUS.md,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: COLORS.cardBorder,
-    borderBottomWidth: 0,
     overflow: 'hidden',
-  },
-  settingsCardShadow: {
-    height: 5,
-    backgroundColor: COLORS.woodLight,
-    borderBottomLeftRadius: RADIUS.md,
-    borderBottomRightRadius: RADIUS.md,
+    marginBottom: SPACING.xs,
+    shadowColor: '#3D1A08',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   settingsRow: {
     flexDirection: 'row',

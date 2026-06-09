@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RecommendStackParamList } from '../types/navigation';
-import { COLORS, FONT, SPACING, BLOCK_SHADOW_SM, BLOCK_SHADOW_LG, RADIUS } from '../design';
+import { COLORS, FONT, SPACING, BLOCK_SHADOW_LG, RADIUS } from '../design';
 import { SearchIcon, BookIcon, MapPinIcon, WrenchIcon, DiceIcon } from '../components/Icon';
 import { WoodButton } from '../components/WoodButton';
 
@@ -107,7 +107,7 @@ function ShortcutCard({ label, desc, Icon, bg, shadowColor, iconColor, iconFill,
   return (
     <TouchableOpacity
       activeOpacity={0.82}
-      style={[s.cardOuter, BLOCK_SHADOW_SM]}
+      style={[s.cardOuter, { shadowColor }]}
       onPress={onPress}
     >
       <View style={[s.cardBlock, { backgroundColor: bg }]}>
@@ -115,7 +115,6 @@ function ShortcutCard({ label, desc, Icon, bg, shadowColor, iconColor, iconFill,
         <Text style={[s.cardLabel, { color: iconColor }]}>{label}</Text>
         <Text style={[s.cardDesc, { color: iconColor, opacity: 0.7 }]}>{desc}</Text>
       </View>
-      <View style={[s.cardShadow, { backgroundColor: shadowColor }]} />
     </TouchableOpacity>
   );
 }
@@ -191,23 +190,21 @@ const s = StyleSheet.create({
     gap: SPACING.md,
     marginBottom: SPACING.sm,
   },
-  cardOuter: { flex: 1 },
+  cardOuter: {
+    flex: 1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 4,
+  },
   cardBlock: {
     padding: SPACING.md,
     borderRadius: RADIUS.md,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: 'rgba(0,0,0,0.07)',
-    borderBottomWidth: 0,
     gap: SPACING.xs,
-    minHeight: 112,
+    minHeight: 110,
     justifyContent: 'flex-end',
-  },
-  cardShadow: {
-    height: 6,
-    borderBottomLeftRadius: RADIUS.md,
-    borderBottomRightRadius: RADIUS.md,
   },
   cardLabel: { fontSize: 14, fontWeight: '800' },
   cardDesc: { fontSize: 11, fontWeight: '600' },

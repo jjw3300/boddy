@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
-import { COLORS, FONT, SPACING, BLOCK_SHADOW, RADIUS } from '../../design';
+import { COLORS, FONT, SPACING, RADIUS } from '../../design';
 import { DiceIcon, CoinIcon, TrophyIcon, FingerIcon, WrenchIcon } from '../../components/Icon';
 import { WoodButton } from '../../components/WoodButton';
 
@@ -25,8 +25,8 @@ interface ToolCard {
 
 const TOOLS: ToolCard[] = [
   {
-    label: '주사위 굴리기',
-    desc: '1~6면체 주사위를\n마음껏 굴려요',
+    label: '주사위',
+    desc: '1~6면체',
     Icon: DiceIcon,
     bg: COLORS.woodLight,
     bottomColor: COLORS.woodDark,
@@ -36,7 +36,7 @@ const TOOLS: ToolCard[] = [
   },
   {
     label: '동전 던지기',
-    desc: '앞면? 뒷면?\n운에 맡겨요',
+    desc: '앞면 / 뒷면',
     Icon: CoinIcon,
     bg: '#FFF0B0',
     bottomColor: '#9A7A00',
@@ -46,9 +46,9 @@ const TOOLS: ToolCard[] = [
   },
   {
     label: '점수판',
-    desc: '실시간 점수를\n함께 기록해요',
+    desc: '실시간 기록',
     Icon: TrophyIcon,
-    bg: '#B5D5A0',
+    bg: '#C8E8B8',
     bottomColor: '#2E6040',
     iconColor: '#1E4828',
     iconFill: '#6EC98A',
@@ -56,9 +56,9 @@ const TOOLS: ToolCard[] = [
   },
   {
     label: '선 정하기',
-    desc: '누가 먼저?\n랜덤으로 정해요',
+    desc: '랜덤 순서',
     Icon: FingerIcon,
-    bg: '#F0B0A8',
+    bg: '#F0C8C0',
     bottomColor: '#8A2820',
     iconColor: '#6A1A10',
     iconFill: '#F07870',
@@ -71,25 +71,27 @@ export default function ToolkitHomeScreen({ navigation }: Props) {
     <SafeAreaView style={s.container}>
       {/* 헤더 */}
       <View style={s.header}>
-        <WrenchIcon size={24} color={COLORS.woodDark} fill={COLORS.woodMid} />
+        <WrenchIcon size={22} color={COLORS.woodDark} fill={COLORS.woodMid} />
         <Text style={s.title}>도구 모음</Text>
       </View>
       <Text style={s.subtitle}>게임 중 필요한 모든 것</Text>
 
-      <ScrollView contentContainerStyle={s.grid} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={s.grid}
+        showsVerticalScrollIndicator={false}
+      >
         {TOOLS.map(tool => (
           <WoodButton
             key={tool.route}
             onPress={() => navigation.navigate(tool.route as any)}
             bg={tool.bg}
             bottomColor={tool.bottomColor}
-            depth={7}
             radius={RADIUS.lg}
-            style={s.cardSurface}
+            style={s.card}
           >
             <View style={s.cardInner}>
-              <View style={s.iconArea}>
-                <tool.Icon size={44} color={tool.iconColor} fill={tool.iconFill} />
+              <View style={[s.iconCircle, { backgroundColor: `${tool.iconFill}60` }]}>
+                <tool.Icon size={32} color={tool.iconColor} fill={tool.iconFill} />
               </View>
               <Text style={[s.cardLabel, { color: tool.iconColor }]}>{tool.label}</Text>
               <Text style={[s.cardDesc, { color: tool.iconColor }]}>{tool.desc}</Text>
@@ -125,35 +127,34 @@ const s = StyleSheet.create({
     flexWrap: 'wrap',
     gap: SPACING.md,
   },
-  cardSurface: {
+  card: {
     width: '47%',
     paddingVertical: 0,
     paddingHorizontal: 0,
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.08)',
-    // BLOCK_SHADOW는 WoodButton 외부에서 적용할 수 없으므로 elevation만
-    elevation: 4,
-    shadowColor: '#3D1A08',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
   },
   cardInner: {
     padding: SPACING.md,
-    paddingBottom: SPACING.md + 4,
-    minHeight: 170,
-    justifyContent: 'flex-end',
+    paddingTop: SPACING.md + 4,
+    paddingBottom: SPACING.md + 2,
+    gap: SPACING.xs,
+    alignItems: 'flex-start',
   },
-  iconArea: { marginBottom: SPACING.sm + 2 },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
+  },
   cardLabel: {
     fontSize: 15,
     fontWeight: '900',
-    marginBottom: SPACING.xs,
+    lineHeight: 20,
   },
   cardDesc: {
     fontSize: 12,
     fontWeight: '600',
-    lineHeight: 18,
-    opacity: 0.8,
+    opacity: 0.7,
   },
 });

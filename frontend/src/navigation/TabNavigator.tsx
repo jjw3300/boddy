@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { TabParamList } from '../types/navigation';
 import RecommendStack from './RecommendStack';
 import LogStack from './LogStack';
@@ -8,7 +8,7 @@ import { CafeScreen } from '../screens/PlaceholderScreen';
 import ToolkitStack from './ToolkitStack';
 import ProfileStack from './ProfileStack';
 import { DiceIcon, BookIcon, MapPinIcon, WrenchIcon, UserIcon } from '../components/Icon';
-import { COLORS, RADIUS, BLOCK_DEPTH } from '../design';
+import { COLORS, RADIUS } from '../design';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -16,27 +16,19 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 interface TabIconProps {
   Icon: React.ComponentType<{ size?: number; color?: string; fill?: string }>;
-  label: string;
   focused: boolean;
   activeColor: string;
   activeBg: string;
-  activeBottom: string;
 }
 
-function WoodTabIcon({
-  Icon, label, focused, activeColor, activeBg, activeBottom,
-}: TabIconProps) {
+function WoodTabIcon({ Icon, focused, activeColor, activeBg }: TabIconProps) {
   return (
     <View style={s.iconWrap}>
-      {/* 블럭 바닥면 (focused 일 때만) */}
-      {focused && <View style={[s.tabBottom, { backgroundColor: activeBottom }]} />}
-      {/* 블럭 표면 */}
       <View style={[
         s.tabBlock,
         focused
-          ? { backgroundColor: activeBg, borderColor: activeColor, borderBottomWidth: 0 }
-          : { backgroundColor: COLORS.bgDeep, borderColor: COLORS.woodLight, borderBottomWidth: 0 },
-        focused && s.tabBlockFocused,
+          ? { backgroundColor: activeBg, borderColor: `${activeColor}40` }
+          : { backgroundColor: 'transparent', borderColor: 'transparent' },
       ]}>
         <Icon
           size={20}
@@ -44,6 +36,7 @@ function WoodTabIcon({
           fill={focused ? activeBg : 'transparent'}
         />
       </View>
+      {focused && <View style={[s.tabIndicator, { backgroundColor: activeColor }]} />}
     </View>
   );
 }
@@ -70,8 +63,8 @@ export default function TabNavigator() {
           tabBarLabel: '추천',
           tabBarIcon: ({ focused }) => (
             <WoodTabIcon
-              Icon={DiceIcon} label="추천" focused={focused}
-              activeColor={COLORS.woodDark} activeBg={COLORS.wood} activeBottom={COLORS.woodDeep}
+              Icon={DiceIcon} focused={focused}
+              activeColor={COLORS.woodDark} activeBg={COLORS.woodLight}
             />
           ),
         }}
@@ -83,8 +76,8 @@ export default function TabNavigator() {
           tabBarLabel: '기록',
           tabBarIcon: ({ focused }) => (
             <WoodTabIcon
-              Icon={BookIcon} label="기록" focused={focused}
-              activeColor="#3A6B2A" activeBg="#A8D090" activeBottom="#2A5020"
+              Icon={BookIcon} focused={focused}
+              activeColor="#3A6B2A" activeBg="#D8F0C8"
             />
           ),
         }}
@@ -96,8 +89,8 @@ export default function TabNavigator() {
           tabBarLabel: '카페',
           tabBarIcon: ({ focused }) => (
             <WoodTabIcon
-              Icon={MapPinIcon} label="카페" focused={focused}
-              activeColor={COLORS.paintRed} activeBg="#F0B0A8" activeBottom="#A03028"
+              Icon={MapPinIcon} focused={focused}
+              activeColor={COLORS.paintRed} activeBg="#FDECEA"
             />
           ),
         }}
@@ -109,8 +102,8 @@ export default function TabNavigator() {
           tabBarLabel: '도구',
           tabBarIcon: ({ focused }) => (
             <WoodTabIcon
-              Icon={WrenchIcon} label="도구" focused={focused}
-              activeColor={COLORS.paintBlue} activeBg="#A8C8E8" activeBottom="#2A5080"
+              Icon={WrenchIcon} focused={focused}
+              activeColor={COLORS.paintBlue} activeBg="#E8F2FF"
             />
           ),
         }}
@@ -122,8 +115,8 @@ export default function TabNavigator() {
           tabBarLabel: '내 정보',
           tabBarIcon: ({ focused }) => (
             <WoodTabIcon
-              Icon={UserIcon} label="내 정보" focused={focused}
-              activeColor={COLORS.woodDark} activeBg={COLORS.woodLight} activeBottom={COLORS.woodMid}
+              Icon={UserIcon} focused={focused}
+              activeColor={COLORS.woodDark} activeBg={COLORS.bgDeep}
             />
           ),
         }}
@@ -137,52 +130,41 @@ export default function TabNavigator() {
 const s = StyleSheet.create({
   tabBar: {
     backgroundColor: COLORS.cardLight,
-    borderTopWidth: 2.5,
+    borderTopWidth: 1,
     borderTopColor: COLORS.woodLight,
-    height: 74,
-    paddingBottom: 10,
+    height: 72,
+    paddingBottom: 8,
     paddingTop: 6,
-    // 탭바 자체도 나무 블럭 느낌
     shadowColor: COLORS.woodDeep,
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
     elevation: 8,
   },
   tabItem: {
-    paddingTop: 4,
+    paddingTop: 2,
   },
   tabLabel: {
     fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-    marginTop: 2,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+    marginTop: 1,
   },
   iconWrap: {
     alignItems: 'center',
-    width: 46,
-    position: 'relative',
+    gap: 3,
   },
   tabBlock: {
-    width: 42,
-    height: 32,
+    width: 40,
+    height: 30,
     borderRadius: RADIUS.sm,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    position: 'relative',
-    zIndex: 1,
   },
-  tabBlockFocused: {
-    // focused 블럭은 살짝 올라간 느낌
-    marginBottom: BLOCK_DEPTH,
-  },
-  tabBottom: {
-    position: 'absolute',
-    bottom: 0,
-    width: 42,
-    height: BLOCK_DEPTH + 2,
-    borderRadius: RADIUS.sm,
-    zIndex: 0,
+  tabIndicator: {
+    width: 16,
+    height: 3,
+    borderRadius: 2,
   },
 });
