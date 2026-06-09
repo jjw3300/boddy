@@ -25,12 +25,11 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      {/* 배경 나뭇결 장식 */}
       <View style={s.grainTop} />
       <View style={s.grainBottom} />
 
       <View style={s.inner}>
-        {/* 로고 */}
+        {/* 로고 + 태그라인 */}
         <View style={s.logoArea}>
           <View style={s.logoWrapper}>
             <View style={s.logoBlock}>
@@ -40,16 +39,12 @@ export default function LoginScreen() {
           </View>
           <Text style={s.appName}>Boddy</Text>
           <Text style={s.appSub}>보드게임 버디</Text>
-        </View>
-
-        {/* 태그라인 */}
-        <View style={s.taglineBox}>
-          <Text style={s.tagline}>나무처럼 따뜻하게,{'\n'}게임처럼 즐겁게</Text>
+          <Text style={s.tagline}>어떤 게임 해볼지 같이 찾아봐요</Text>
         </View>
 
         {/* 로그인 버튼 영역 */}
         <View style={s.btnArea}>
-          <Text style={s.startLabel}>시작하기</Text>
+          <Text style={s.startLabel}>로그인하고 시작하기</Text>
 
           {/* 카카오 로그인 */}
           <SocialButton
@@ -156,11 +151,10 @@ const s = StyleSheet.create({
     flex: 1,
     paddingHorizontal: SPACING.lg,
     justifyContent: 'space-between',
-    paddingTop: SPACING.xxl,
-    paddingBottom: SPACING.xxl,
+    paddingTop: SPACING.xxl + SPACING.md,
+    paddingBottom: SPACING.xl,
   },
 
-  // 로고 영역
   logoArea: {
     alignItems: 'center',
   },
@@ -205,30 +199,24 @@ const s = StyleSheet.create({
     marginTop: 6,
     color: COLORS.textSecondary,
   },
-
-  // 태그라인
-  taglineBox: {
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-  },
   tagline: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.textMuted,
     textAlign: 'center',
-    lineHeight: 26,
+    marginTop: SPACING.md,
+    lineHeight: 22,
   },
 
-  // 버튼 영역
   btnArea: {
     gap: SPACING.sm + 2,
   },
   startLabel: {
     ...FONT.label,
-    fontSize: 12,
+    fontSize: 11,
     textAlign: 'center',
     marginBottom: SPACING.xs,
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     color: COLORS.textMuted,
   },
   socialSurface: {

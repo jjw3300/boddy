@@ -98,13 +98,13 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* 섹션: 앱 설정 */}
-        <SectionHeader label="앱 설정" />
+        {/* 섹션: 설정 */}
+        <SectionHeader label="설정" />
 
         <SettingsCard>
           <SettingsRow
             icon={<BellIcon size={20} color={COLORS.woodMid} fill="none" />}
-            label="알림 설정"
+            label="알림"
             right={
               <Switch
                 value={notiEnabled}
@@ -123,10 +123,9 @@ export default function ProfileScreen({ navigation }: Props) {
           />
         </SettingsCard>
 
-        {/* 섹션: 계정 관리 */}
         {!isGuest && (
           <>
-            <SectionHeader label="계정 관리" />
+            <SectionHeader label="계정" />
             <SettingsCard>
               <SettingsRow
                 icon={<LogoutIcon size={20} color={COLORS.woodMid} />}
@@ -318,10 +317,10 @@ const s = StyleSheet.create({
   sectionHeader: {
     ...FONT.label,
     fontSize: 11,
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     color: COLORS.textMuted,
     marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.sm + 2,
   },
 
   // 설정 카드
@@ -381,6 +380,7 @@ const s = StyleSheet.create({
     ...FONT.caption,
     textAlign: 'center',
     color: COLORS.textMuted,
-    marginTop: SPACING.xl,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
 });

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RecommendStackParamList } from '../types/navigation';
-import { COLORS, FONT, SPACING, BLOCK_SHADOW, BLOCK_SHADOW_SM, BLOCK_SHADOW_LG, RADIUS } from '../design';
+import { COLORS, FONT, SPACING, BLOCK_SHADOW_SM, BLOCK_SHADOW_LG, RADIUS } from '../design';
 import { SearchIcon, BookIcon, MapPinIcon, WrenchIcon, DiceIcon } from '../components/Icon';
 import { WoodButton } from '../components/WoodButton';
 
@@ -11,13 +11,15 @@ interface Props {
 }
 
 export default function HomeScreen({ navigation }: Props) {
+  const goTab = (tab: string) => navigation.getParent()?.navigate(tab as never);
+
   return (
     <SafeAreaView style={s.container}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* 로고 블럭 */}
+        {/* 로고 */}
         <View style={s.logoArea}>
-          <View style={s.logoWrapper}>
+          <View style={[s.logoWrapper, BLOCK_SHADOW_LG]}>
             <View style={s.logoBlock}>
               <DiceIcon size={52} color={COLORS.woodHighlight} fill={COLORS.woodHighlight} />
             </View>
@@ -27,7 +29,7 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={s.appSub}>보드게임 버디</Text>
         </View>
 
-        {/* 메인 추천 블럭 버튼 */}
+        {/* 메인 CTA */}
         <WoodButton
           onPress={() => navigation.navigate('Recommendation')}
           bg={COLORS.wood}
@@ -41,34 +43,46 @@ export default function HomeScreen({ navigation }: Props) {
               <SearchIcon size={36} color={COLORS.woodDark} fill={COLORS.woodLight} />
             </View>
             <View style={s.mainBtnText}>
-              <Text style={s.mainBtnTitle}>게임 추천받기</Text>
-              <Text style={s.mainBtnSub}>취향에 맞는 게임을 찾아드려요</Text>
+              <Text style={s.mainBtnTitle}>오늘 게임 추천받기</Text>
+              <Text style={s.mainBtnSub}>인원수 · 시간 · 취향으로 찾아봐요</Text>
             </View>
           </View>
         </WoodButton>
 
-        {/* 빠른 접근 */}
-        <Text style={s.sectionLabel}>기능 모음</Text>
-        <View style={s.quickGrid}>
-          {QUICK_ITEMS.map(item => (
-            <View key={item.label} style={[s.quickWrapper, BLOCK_SHADOW_SM]}>
-              <View style={[s.quickBlock, { backgroundColor: item.color }]}>
-                <item.Icon size={26} color={item.iconColor} fill={item.iconFill} />
-                <Text style={s.quickLabel}>{item.label}</Text>
-                <View style={s.soonBadge}>
-                  <Text style={s.soonText}>준비 중</Text>
-                </View>
-              </View>
-              <View style={[s.quickShadow, { backgroundColor: item.shadowColor }]} />
-            </View>
-          ))}
+        {/* 바로가기 */}
+        <View style={s.shortcutRow}>
+          <ShortcutCard
+            label="플레이 기록"
+            desc="내 게임 이력 보기"
+            Icon={BookIcon}
+            bg={COLORS.woodLight}
+            shadowColor={COLORS.woodMid}
+            iconColor={COLORS.woodDark}
+            iconFill={COLORS.wood}
+            onPress={() => goTab('LogTab')}
+          />
+          <ShortcutCard
+            label="게임 도구"
+            desc="주사위 · 점수판"
+            Icon={WrenchIcon}
+            bg="#A8C8E8"
+            shadowColor="#2A5080"
+            iconColor="#1A4070"
+            iconFill="#6090C0"
+            onPress={() => goTab('ToolkitTab')}
+          />
         </View>
 
-        {/* 하단 문구 */}
+        {/* 카페 출시 예정 */}
+        <View style={s.comingSoon}>
+          <MapPinIcon size={14} color={COLORS.textMuted} />
+          <Text style={s.comingSoonText}>보드게임 카페 찾기 — 준비 중이에요</Text>
+        </View>
+
         <View style={s.footer}>
-          <View style={s.footerDivider} />
-          <Text style={s.footerText}>🪵  나무처럼 따뜻하게, 게임처럼 즐겁게</Text>
-          <View style={s.footerDivider} />
+          <View style={s.divider} />
+          <Text style={s.footerText}>나무처럼 따뜻하게, 게임처럼 즐겁게</Text>
+          <View style={s.divider} />
         </View>
 
       </ScrollView>
@@ -76,40 +90,48 @@ export default function HomeScreen({ navigation }: Props) {
   );
 }
 
-const QUICK_ITEMS = [
-  {
-    label: '플레이\n기록',
-    Icon: BookIcon,
-    color: COLORS.woodLight,
-    shadowColor: COLORS.woodMid,
-    iconColor: COLORS.woodDark,
-    iconFill: COLORS.wood,
-  },
-  {
-    label: '카페\n찾기',
-    Icon: MapPinIcon,
-    color: '#B5D5A0',
-    shadowColor: '#5A8A40',
-    iconColor: '#2E5A1E',
-    iconFill: '#7AB060',
-  },
-  {
-    label: '도구\n모음',
-    Icon: WrenchIcon,
-    color: '#A8C8E8',
-    shadowColor: '#2A5080',
-    iconColor: '#1A4070',
-    iconFill: '#6090C0',
-  },
-];
+// ─── ShortcutCard ─────────────────────────────────────────────────────────────
+
+interface CardProps {
+  label: string;
+  desc: string;
+  Icon: React.ComponentType<{ size?: number; color?: string; fill?: string }>;
+  bg: string;
+  shadowColor: string;
+  iconColor: string;
+  iconFill: string;
+  onPress: () => void;
+}
+
+function ShortcutCard({ label, desc, Icon, bg, shadowColor, iconColor, iconFill, onPress }: CardProps) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.82}
+      style={[s.cardOuter, BLOCK_SHADOW_SM]}
+      onPress={onPress}
+    >
+      <View style={[s.cardBlock, { backgroundColor: bg }]}>
+        <Icon size={30} color={iconColor} fill={iconFill} />
+        <Text style={[s.cardLabel, { color: iconColor }]}>{label}</Text>
+        <Text style={[s.cardDesc, { color: iconColor, opacity: 0.7 }]}>{desc}</Text>
+      </View>
+      <View style={[s.cardShadow, { backgroundColor: shadowColor }]} />
+    </TouchableOpacity>
+  );
+}
+
+// ─── 스타일 ──────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   scroll: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl },
 
-  // 로고
-  logoArea: { alignItems: 'center', marginTop: SPACING.xxl, marginBottom: SPACING.xl },
-  logoWrapper: { marginBottom: SPACING.md, ...BLOCK_SHADOW_LG },
+  logoArea: {
+    alignItems: 'center',
+    marginTop: SPACING.xxl,
+    marginBottom: SPACING.xl,
+  },
+  logoWrapper: { marginBottom: SPACING.md },
   logoBlock: {
     width: 104,
     height: 104,
@@ -136,13 +158,12 @@ const s = StyleSheet.create({
   appName: { ...FONT.display, color: COLORS.textPrimary, letterSpacing: 3 },
   appSub: { ...FONT.caption, fontSize: 13, letterSpacing: 2, marginTop: SPACING.xs },
 
-  // 메인 버튼
   mainBtnSurface: {
     paddingVertical: 0,
     paddingHorizontal: 0,
     borderWidth: 2,
     borderColor: COLORS.woodMid,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
   mainBtnInner: {
     flexDirection: 'row',
@@ -165,58 +186,51 @@ const s = StyleSheet.create({
   mainBtnTitle: { ...FONT.h2, color: COLORS.textOnWood, marginBottom: SPACING.xs },
   mainBtnSub: { fontSize: 13, color: 'rgba(255,250,240,0.8)', fontWeight: '600' },
 
-  // 섹션 라벨
-  sectionLabel: {
-    ...FONT.label,
-    letterSpacing: 2,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.sm + 2,
+  shortcutRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginBottom: SPACING.sm,
   },
-
-  // 빠른 접근 그리드
-  quickGrid: { flexDirection: 'row', gap: SPACING.sm + 2, marginBottom: SPACING.xl },
-  quickWrapper: { flex: 1 },
-  quickBlock: {
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingVertical: SPACING.md + 4,
-    paddingHorizontal: SPACING.sm,
+  cardOuter: { flex: 1 },
+  cardBlock: {
+    padding: SPACING.md,
     borderRadius: RADIUS.md,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
-    gap: SPACING.sm,
     borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.08)',
+    borderColor: 'rgba(0,0,0,0.07)',
     borderBottomWidth: 0,
-    minHeight: 120,
+    gap: SPACING.xs,
+    minHeight: 112,
+    justifyContent: 'flex-end',
   },
-  quickShadow: {
-    height: 7,
+  cardShadow: {
+    height: 6,
     borderBottomLeftRadius: RADIUS.md,
     borderBottomRightRadius: RADIUS.md,
   },
-  quickLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-    lineHeight: 17,
-  },
-  soonBadge: {
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: RADIUS.full,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-  },
-  soonText: { fontSize: 10, fontWeight: '700', color: COLORS.textPrimary },
+  cardLabel: { fontSize: 14, fontWeight: '800' },
+  cardDesc: { fontSize: 11, fontWeight: '600' },
 
-  // 푸터
+  comingSoon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: 10,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.bgDeep,
+    borderRadius: RADIUS.sm,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xl,
+  },
+  comingSoonText: { ...FONT.caption, color: COLORS.textMuted, fontSize: 12 },
+
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
     paddingVertical: SPACING.md,
   },
-  footerDivider: { flex: 1, height: 1, backgroundColor: COLORS.woodLight },
+  divider: { flex: 1, height: 1, backgroundColor: COLORS.woodLight },
   footerText: { ...FONT.caption, color: COLORS.textSecondary, fontSize: 12 },
 });

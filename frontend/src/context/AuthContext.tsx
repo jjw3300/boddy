@@ -116,14 +116,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const mockProfiles: Record<LoginProvider, User> = {
       kakao: {
         id: 'kakao_mock_001',
-        nickname: '카카오 사용자',
-        email: 'kakao@example.com',
+        nickname: '보드게임러버',
         provider: 'kakao',
       },
       google: {
         id: 'google_mock_001',
-        nickname: 'Google 사용자',
-        email: 'google@example.com',
+        nickname: '보드게임러버',
         provider: 'google',
       },
       guest: {
