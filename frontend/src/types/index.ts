@@ -33,3 +33,20 @@ export interface RecommendationResponse {
   games: GameSummary[];
   total: number;
 }
+
+export interface CafeSummary {
+  id: string;
+  name: string;
+  address: string;
+  road_address: string | null;
+  phone: string | null;
+  lat: number;
+  lng: number;
+  distance_m: number | null;
+  place_url: string;
+}
+
+export interface CafeSearchResponse {
+  cafes: CafeSummary[];
+  total: number;
+}

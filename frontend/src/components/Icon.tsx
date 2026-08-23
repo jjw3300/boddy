@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path, Circle, Rect, G, Line, Ellipse, Polygon } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg';
 
 interface IconProps {
   size?: number;
@@ -7,9 +7,11 @@ interface IconProps {
   fill?: string;
 }
 
+const DEFAULT_COLOR = '#1C1917';
+
 // ─── 탭 아이콘 ───────────────────────────────────────────────────────────────
 
-export function DiceIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function DiceIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="3" y="3" width="18" height="18" rx="4" fill={fill} stroke={color} strokeWidth="2" />
@@ -22,7 +24,7 @@ export function DiceIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconPr
   );
 }
 
-export function BookIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function BookIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -37,7 +39,7 @@ export function BookIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconPr
   );
 }
 
-export function MapPinIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function MapPinIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -49,7 +51,7 @@ export function MapPinIcon({ size = 24, color = '#3D2314', fill = 'none' }: Icon
   );
 }
 
-export function WrenchIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function WrenchIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -63,7 +65,7 @@ export function WrenchIcon({ size = 24, color = '#3D2314', fill = 'none' }: Icon
 
 // ─── 내 정보 탭 아이콘 ───────────────────────────────────────────────────────
 
-export function UserIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function UserIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="8" r="4" fill={fill} stroke={color} strokeWidth="2" />
@@ -77,7 +79,7 @@ export function UserIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconPr
 
 // ─── 설정 / 내 정보 화면 아이콘 ─────────────────────────────────────────────
 
-export function BellIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function BellIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -92,7 +94,7 @@ export function BellIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconPr
   );
 }
 
-export function InfoIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function InfoIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" fill={fill} stroke={color} strokeWidth="2" />
@@ -102,7 +104,7 @@ export function InfoIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconPr
   );
 }
 
-export function LogoutIcon({ size = 24, color = '#3D2314' }: IconProps) {
+export function LogoutIcon({ size = 24, color = DEFAULT_COLOR }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -118,7 +120,7 @@ export function LogoutIcon({ size = 24, color = '#3D2314' }: IconProps) {
   );
 }
 
-export function EditIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function EditIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -133,7 +135,7 @@ export function EditIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconPr
   );
 }
 
-export function ChevronRightIcon({ size = 24, color = '#3D2314' }: IconProps) {
+export function ChevronRightIcon({ size = 24, color = DEFAULT_COLOR }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M9 18L15 12L9 6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -141,7 +143,7 @@ export function ChevronRightIcon({ size = 24, color = '#3D2314' }: IconProps) {
   );
 }
 
-export function ShieldIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function ShieldIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -154,7 +156,7 @@ export function ShieldIcon({ size = 24, color = '#3D2314', fill = 'none' }: Icon
 
 // ─── 기존 유틸 아이콘 ────────────────────────────────────────────────────────
 
-export function SearchIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function SearchIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="11" cy="11" r="7" fill={fill} stroke={color} strokeWidth="2.5" />
@@ -163,7 +165,7 @@ export function SearchIcon({ size = 24, color = '#3D2314', fill = 'none' }: Icon
   );
 }
 
-export function ArrowLeftIcon({ size = 24, color = '#3D2314' }: IconProps) {
+export function ArrowLeftIcon({ size = 24, color = DEFAULT_COLOR }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
@@ -172,7 +174,7 @@ export function ArrowLeftIcon({ size = 24, color = '#3D2314' }: IconProps) {
   );
 }
 
-export function RefreshIcon({ size = 24, color = '#3D2314' }: IconProps) {
+export function RefreshIcon({ size = 24, color = DEFAULT_COLOR }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M3 12C3 7.03 7.03 3 12 3C15.47 3 18.47 4.97 20.03 7.87" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
@@ -183,7 +185,7 @@ export function RefreshIcon({ size = 24, color = '#3D2314' }: IconProps) {
   );
 }
 
-export function GamepadIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function GamepadIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="2" y="7" width="20" height="12" rx="5" fill={fill} stroke={color} strokeWidth="2" />
@@ -195,7 +197,7 @@ export function GamepadIcon({ size = 24, color = '#3D2314', fill = 'none' }: Ico
   );
 }
 
-export function CoinIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function CoinIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="9" fill={fill} stroke={color} strokeWidth="2" />
@@ -206,7 +208,7 @@ export function CoinIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconPr
   );
 }
 
-export function TrophyIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function TrophyIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -221,7 +223,7 @@ export function TrophyIcon({ size = 24, color = '#3D2314', fill = 'none' }: Icon
   );
 }
 
-export function FingerIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function FingerIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -232,7 +234,7 @@ export function FingerIcon({ size = 24, color = '#3D2314', fill = 'none' }: Icon
   );
 }
 
-export function StarIcon({ size = 24, color = '#3D2314', fill = 'none' }: IconProps) {
+export function StarIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path

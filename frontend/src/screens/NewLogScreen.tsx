@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, SafeAreaView, ActivityIndicator, Image,
+  SafeAreaView, ActivityIndicator,
   KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,22 +10,42 @@ import { PlayLog, LogPlayer, ResultType, WinLossResult, ResultData } from '../ty
 import { GameSearchResult } from '../types';
 import { searchGames } from '../api/games';
 import { saveLog, generateId, todayStr } from '../services/logStorage';
-import { COLORS, BLOCK_SHADOW_SM, RADIUS } from '../design';
+import { COLORS } from '../design';
 import { ArrowLeftIcon } from '../components/Icon';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { TagColor } from '../components/Tag';
+import { cn } from '../lib/utils';
 
 const STEPS = ['game', 'session', 'result', 'review'] as const;
+
+// 결과 형식 선택 칩의 선택 상태 틴트 (Tag.tsx 팔레트와 동일한 톤)
+const RESULT_TINT: Record<TagColor, { bg: string; text: string }> = {
+  info:    { bg: 'bg-blue-50',   text: 'text-blue-700' },
+  success: { bg: 'bg-green-50',  text: 'text-green-700' },
+  warning: { bg: 'bg-amber-50',  text: 'text-amber-700' },
+  danger:  { bg: 'bg-red-50',    text: 'text-red-700' },
+  violet:  { bg: 'bg-violet-50', text: 'text-violet-700' },
+  teal:    { bg: 'bg-teal-50',   text: 'text-teal-700' },
+  neutral: { bg: 'bg-stone-100', text: 'text-stone-600' },
+};
+
+const WIN_LOSS_TINT: Record<WinLossResult, { bg: string; border: string }> = {
+  win:  { bg: 'bg-green-600', border: 'border-green-600' },
+  draw: { bg: 'bg-stone-500', border: 'border-stone-500' },
+  loss: { bg: 'bg-red-600',   border: 'border-red-600' },
+};
 
 const RESULT_TYPES: {
   value: ResultType;
   label: string;
   desc: string;
-  bg: string;
-  bottom: string;
+  tagColor: TagColor;
 }[] = [
-  { value: 'score',    label: '점수', desc: '숫자 점수',   bg: '#A8C8E888', bottom: COLORS.paintBlue },
-  { value: 'win_loss', label: '승패', desc: 'O / △ / X', bg: '#B5D5A088', bottom: '#4E9E6B' },
-  { value: 'rank',     label: '순위', desc: '순서 매기기', bg: COLORS.paintYellow + '66', bottom: COLORS.paintYellow },
-  { value: 'free',     label: '자유', desc: '자유 입력',   bg: COLORS.woodLight, bottom: COLORS.woodMid },
+  { value: 'score',    label: '점수', desc: '숫자 점수',   tagColor: 'info' },
+  { value: 'win_loss', label: '승패', desc: 'O / △ / X', tagColor: 'success' },
+  { value: 'rank',     label: '순위', desc: '순서 매기기', tagColor: 'warning' },
+  { value: 'free',     label: '자유', desc: '자유 입력',   tagColor: 'neutral' },
 ];
 
 interface Props {
@@ -197,73 +217,65 @@ export default function NewLogScreen({ navigation }: Props) {
   function renderGameStep() {
     return (
       <View>
-        <View style={styles.questionBox}>
-          <Text style={styles.stepLabel}>1 / 4</Text>
-          <Text style={styles.question}>어떤 게임을 했나요?</Text>
-          <Text style={styles.questionSub}>게임 이름을 검색하거나 직접 입력하세요</Text>
+        <View className="mb-6 mt-4">
+          <Text className="mb-2 text-xs font-extrabold tracking-wide text-foreground">1 / 4</Text>
+          <Text className="mb-1 text-[23px] font-extrabold leading-[31px] text-foreground">어떤 게임을 했나요?</Text>
+          <Text className="text-[13px] font-semibold text-muted-foreground">게임 이름을 검색하거나 직접 입력하세요</Text>
         </View>
 
         {/* Selected game badge */}
         {selectedGame && (
-          <View style={styles.selectedGameRow}>
-            <View style={styles.selectedGameBadge}>
-              <Text style={styles.selectedGameText} numberOfLines={1}>
+          <View className="mb-3 flex-row items-center gap-2.5">
+            <View className="flex-1 rounded-lg bg-green-50 px-3 py-2">
+              <Text className="text-sm font-extrabold text-green-700" numberOfLines={1}>
                 ✓  {selectedGame.name}
               </Text>
             </View>
-            <TouchableOpacity onPress={clearSelectedGame} style={styles.clearBtn}>
-              <Text style={styles.clearBtnText}>취소</Text>
+            <TouchableOpacity onPress={clearSelectedGame} className="rounded-lg bg-muted px-2.5 py-2">
+              <Text className="text-[13px] font-bold text-muted-foreground">취소</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Search row */}
-        <View style={styles.searchRow}>
-          <View style={styles.searchInputWrapper}>
-            <TextInput
-              style={styles.searchInput}
-              value={gameQuery}
-              onChangeText={text => {
-                setGameQuery(text);
-                if (selectedGame) setSelectedGame(null);
-              }}
-              placeholder="게임 이름 입력..."
-              placeholderTextColor={COLORS.textSecondary}
-              returnKeyType="search"
-              onSubmitEditing={handleSearch}
-            />
-          </View>
-          <View style={styles.searchBtnWrapper}>
-            <TouchableOpacity style={styles.searchBtn} onPress={handleSearch} activeOpacity={0.85}>
-              <Text style={styles.searchBtnText}>검색</Text>
-            </TouchableOpacity>
-            <View style={styles.searchBtnBottom} />
-          </View>
+        <View className="mb-3 flex-row gap-2">
+          <Input
+            className="flex-1"
+            value={gameQuery}
+            onChangeText={text => {
+              setGameQuery(text);
+              if (selectedGame) setSelectedGame(null);
+            }}
+            placeholder="게임 이름 입력..."
+            returnKeyType="search"
+            onSubmitEditing={handleSearch}
+          />
+          <Button label="검색" size="sm" onPress={handleSearch} />
         </View>
 
         {searching && (
-          <View style={styles.searchingBox}>
-            <ActivityIndicator color={COLORS.wood} />
-            <Text style={styles.searchingText}>검색 중...</Text>
+          <View className="mb-2 flex-row items-center gap-2">
+            <ActivityIndicator color={COLORS.primary} />
+            <Text className="text-sm font-semibold text-muted-foreground">검색 중...</Text>
           </View>
         )}
 
         {searchResults.length > 0 && (
-          <View style={styles.resultsList}>
+          <View className="overflow-hidden rounded-xl border border-border bg-card">
             {searchResults.map(item => (
               <TouchableOpacity
                 key={item.bgg_id}
-                style={styles.resultItem}
+                className="flex-row items-center justify-between border-b border-border px-3.5 py-3"
                 onPress={() => selectSearchResult(item)}
                 activeOpacity={0.8}
               >
                 <View>
-                  <Text style={styles.resultItemName}>{item.name}</Text>
+                  <Text className="flex-1 text-sm font-bold text-foreground">{item.name}</Text>
                   {item.year && (
-                    <Text style={styles.resultItemYear}>{item.year}년</Text>
+                    <Text className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{item.year}년</Text>
                   )}
                 </View>
-                <Text style={styles.resultItemArrow}>›</Text>
+                <Text className="text-xl font-light text-muted-foreground">›</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -275,65 +287,56 @@ export default function NewLogScreen({ navigation }: Props) {
   function renderSessionStep() {
     return (
       <View>
-        <View style={styles.questionBox}>
-          <Text style={styles.stepLabel}>2 / 4</Text>
-          <Text style={styles.question}>세션 정보</Text>
-          <Text style={styles.questionSub}>날짜와 참여 인원을 설정하세요</Text>
+        <View className="mb-6 mt-4">
+          <Text className="mb-2 text-xs font-extrabold tracking-wide text-foreground">2 / 4</Text>
+          <Text className="mb-1 text-[23px] font-extrabold leading-[31px] text-foreground">세션 정보</Text>
+          <Text className="text-[13px] font-semibold text-muted-foreground">날짜와 참여 인원을 설정하세요</Text>
         </View>
 
         {/* Date */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionTitle}>날짜</Text>
-          <View style={styles.fieldWrapper}>
-            <TextInput
-              style={styles.fieldInput}
-              value={date}
-              onChangeText={setDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={COLORS.textSecondary}
-              keyboardType="numeric"
-              maxLength={10}
-            />
-          </View>
+        <View className="mb-6">
+          <Text className="mb-2.5 text-sm font-extrabold tracking-wide text-muted-foreground">날짜</Text>
+          <Input
+            className="text-base font-bold"
+            value={date}
+            onChangeText={setDate}
+            placeholder="YYYY-MM-DD"
+            keyboardType="numeric"
+            maxLength={10}
+          />
         </View>
 
         {/* Players */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionTitle}>참여자</Text>
-          <View style={styles.playersList}>
+        <View className="mb-6">
+          <Text className="mb-2.5 text-sm font-extrabold tracking-wide text-muted-foreground">참여자</Text>
+          <View className="mb-2.5 gap-2">
             {players.map(p => (
-              <View key={p.id} style={styles.playerRow}>
-                <View style={styles.playerChip}>
-                  <Text style={styles.playerChipText}>{p.name}</Text>
+              <View key={p.id} className="flex-row items-center gap-2">
+                <View className="flex-1 rounded-lg bg-accent px-3.5 py-2.5">
+                  <Text className="text-sm font-bold text-foreground">{p.name}</Text>
                 </View>
                 {players.length > 1 && (
                   <TouchableOpacity
-                    style={styles.removePlayerBtn}
+                    className="h-[34px] w-[34px] items-center justify-center rounded-lg bg-red-50"
                     onPress={() => removePlayer(p.id)}
                   >
-                    <Text style={styles.removePlayerBtnText}>×</Text>
+                    <Text className="text-lg font-bold text-red-600">×</Text>
                   </TouchableOpacity>
                 )}
               </View>
             ))}
           </View>
 
-          <View style={styles.addPlayerRow}>
-            <TextInput
-              style={styles.addPlayerInput}
+          <View className="flex-row items-center gap-2">
+            <Input
+              className="flex-1"
               value={playerInput}
               onChangeText={setPlayerInput}
               placeholder="이름 입력..."
-              placeholderTextColor={COLORS.textSecondary}
               onSubmitEditing={addPlayer}
               returnKeyType="done"
             />
-            <View style={styles.addPlayerBtnWrapper}>
-              <TouchableOpacity style={styles.addPlayerBtn} onPress={addPlayer} activeOpacity={0.85}>
-                <Text style={styles.addPlayerBtnText}>+ 추가</Text>
-              </TouchableOpacity>
-              <View style={styles.addPlayerBtnBottom} />
-            </View>
+            <Button label="+ 추가" size="sm" onPress={addPlayer} />
           </View>
         </View>
       </View>
@@ -343,43 +346,38 @@ export default function NewLogScreen({ navigation }: Props) {
   function renderResultStep() {
     return (
       <View>
-        <View style={styles.questionBox}>
-          <Text style={styles.stepLabel}>3 / 4</Text>
-          <Text style={styles.question}>결과를 기록해요</Text>
-          <Text style={styles.questionSub}>형식을 선택하고 결과를 입력하세요</Text>
+        <View className="mb-6 mt-4">
+          <Text className="mb-2 text-xs font-extrabold tracking-wide text-foreground">3 / 4</Text>
+          <Text className="mb-1 text-[23px] font-extrabold leading-[31px] text-foreground">결과를 기록해요</Text>
+          <Text className="text-[13px] font-semibold text-muted-foreground">형식을 선택하고 결과를 입력하세요</Text>
         </View>
 
         {/* Result type selector */}
-        <View style={styles.resultTypeGrid}>
+        <View className="mb-6 flex-row flex-wrap gap-2.5">
           {RESULT_TYPES.map(rt => {
             const active = resultType === rt.value;
+            const tint = RESULT_TINT[rt.tagColor];
             return (
-              <View key={rt.value} style={styles.resultTypeWrapper}>
-                <TouchableOpacity
-                  style={[
-                    styles.resultTypeBlock,
-                    { backgroundColor: active ? rt.bg : COLORS.bgDeep },
-                    active && styles.resultTypeBlockActive,
-                  ]}
-                  onPress={() => setResultType(rt.value)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.resultTypeLabel, active && { color: rt.bottom }]}>
-                    {rt.label}
-                  </Text>
-                  <Text style={styles.resultTypeDesc}>{rt.desc}</Text>
-                </TouchableOpacity>
-                <View style={[
-                  styles.resultTypeBottom,
-                  { backgroundColor: active ? rt.bottom : COLORS.woodLight },
-                ]} />
-              </View>
+              <TouchableOpacity
+                key={rt.value}
+                className={cn(
+                  'w-[47%] rounded-xl border px-4 py-3.5',
+                  active ? cn(tint.bg, 'border-transparent') : 'border-border bg-background',
+                )}
+                onPress={() => setResultType(rt.value)}
+                activeOpacity={0.85}
+              >
+                <Text className={cn('mb-0.5 text-base font-extrabold', active ? tint.text : 'text-foreground')}>
+                  {rt.label}
+                </Text>
+                <Text className="text-[11px] font-semibold text-muted-foreground">{rt.desc}</Text>
+              </TouchableOpacity>
             );
           })}
         </View>
 
         {/* Result data entry */}
-        <View style={styles.resultTableSection}>
+        <View className="overflow-hidden rounded-xl border border-border bg-card">
           {renderResultTable()}
         </View>
       </View>
@@ -389,18 +387,18 @@ export default function NewLogScreen({ navigation }: Props) {
   function renderResultTable() {
     if (resultType === 'score') {
       return (
-        <View style={styles.resultTable}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderCell, styles.tableHeaderName]}>참여자</Text>
-            <Text style={[styles.tableHeaderCell, styles.tableHeaderValue]}>점수</Text>
+        <View>
+          <View className="flex-row bg-muted px-3.5 py-2.5">
+            <Text className="flex-[2] text-xs font-extrabold text-muted-foreground">참여자</Text>
+            <Text className="flex-1 text-center text-xs font-extrabold text-muted-foreground">점수</Text>
           </View>
           {scoreEntries.map((entry, idx) => {
             const player = players.find(p => p.id === entry.player_id);
             return (
-              <View key={entry.player_id} style={styles.tableRow}>
-                <Text style={styles.tablePlayerName}>{player?.name ?? '-'}</Text>
+              <View key={entry.player_id} className="flex-row items-center border-t border-border px-3.5 py-3">
+                <Text className="flex-[2] text-sm font-bold text-foreground">{player?.name ?? '-'}</Text>
                 <TextInput
-                  style={styles.scoreInput}
+                  className="flex-1 rounded-lg border border-border bg-background px-1 py-1.5 text-center text-[15px] font-extrabold text-foreground"
                   keyboardType="numeric"
                   value={entry.score}
                   onChangeText={val => {
@@ -409,7 +407,7 @@ export default function NewLogScreen({ navigation }: Props) {
                     setScoreEntries(updated);
                   }}
                   placeholder="0"
-                  placeholderTextColor={COLORS.textSecondary}
+                  placeholderTextColor={COLORS.mutedForeground}
                   textAlign="center"
                 />
               </View>
@@ -421,36 +419,35 @@ export default function NewLogScreen({ navigation }: Props) {
 
     if (resultType === 'win_loss') {
       return (
-        <View style={styles.resultTable}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderCell, styles.tableHeaderName]}>참여자</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 2 }]}>결과</Text>
+        <View>
+          <View className="flex-row bg-muted px-3.5 py-2.5">
+            <Text className="flex-[2] text-xs font-extrabold text-muted-foreground">참여자</Text>
+            <Text className="flex-[2] text-xs font-extrabold text-muted-foreground">결과</Text>
           </View>
           {winLossEntries.map((entry, idx) => {
             const player = players.find(p => p.id === entry.player_id);
             return (
-              <View key={entry.player_id} style={styles.tableRow}>
-                <Text style={styles.tablePlayerName}>{player?.name ?? '-'}</Text>
-                <View style={styles.winLossButtons}>
+              <View key={entry.player_id} className="flex-row items-center border-t border-border px-3.5 py-3">
+                <Text className="flex-[2] text-sm font-bold text-foreground">{player?.name ?? '-'}</Text>
+                <View className="flex-[2] flex-row justify-end gap-1.5">
                   {(['win', 'draw', 'loss'] as WinLossResult[]).map(res => {
                     const active = entry.result === res;
                     const label = res === 'win' ? 'O' : res === 'draw' ? '△' : 'X';
-                    const activeColor =
-                      res === 'win' ? '#4E9E6B' : res === 'draw' ? COLORS.woodMid : COLORS.paintRed;
+                    const tint = WIN_LOSS_TINT[res];
                     return (
                       <TouchableOpacity
                         key={res}
-                        style={[
-                          styles.winLossBtn,
-                          active && { backgroundColor: activeColor, borderColor: activeColor },
-                        ]}
+                        className={cn(
+                          'h-9 w-10 items-center justify-center rounded-lg border border-border bg-muted',
+                          active && cn(tint.bg, tint.border),
+                        )}
                         onPress={() => {
                           const updated = [...winLossEntries];
                           updated[idx] = { ...updated[idx], result: res };
                           setWinLossEntries(updated);
                         }}
                       >
-                        <Text style={[styles.winLossBtnText, active && styles.winLossBtnTextActive]}>
+                        <Text className={cn('text-[15px] font-black', active ? 'text-white' : 'text-muted-foreground')}>
                           {label}
                         </Text>
                       </TouchableOpacity>
@@ -466,18 +463,18 @@ export default function NewLogScreen({ navigation }: Props) {
 
     if (resultType === 'rank') {
       return (
-        <View style={styles.resultTable}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderCell, styles.tableHeaderName]}>참여자</Text>
-            <Text style={[styles.tableHeaderCell, styles.tableHeaderValue]}>순위</Text>
+        <View>
+          <View className="flex-row bg-muted px-3.5 py-2.5">
+            <Text className="flex-[2] text-xs font-extrabold text-muted-foreground">참여자</Text>
+            <Text className="flex-1 text-center text-xs font-extrabold text-muted-foreground">순위</Text>
           </View>
           {rankEntries.map((entry, idx) => {
             const player = players.find(p => p.id === entry.player_id);
             return (
-              <View key={entry.player_id} style={styles.tableRow}>
-                <Text style={styles.tablePlayerName}>{player?.name ?? '-'}</Text>
+              <View key={entry.player_id} className="flex-row items-center border-t border-border px-3.5 py-3">
+                <Text className="flex-[2] text-sm font-bold text-foreground">{player?.name ?? '-'}</Text>
                 <TextInput
-                  style={styles.scoreInput}
+                  className="flex-1 rounded-lg border border-border bg-background px-1 py-1.5 text-center text-[15px] font-extrabold text-foreground"
                   keyboardType="numeric"
                   value={entry.rank}
                   onChangeText={val => {
@@ -486,7 +483,7 @@ export default function NewLogScreen({ navigation }: Props) {
                     setRankEntries(updated);
                   }}
                   placeholder="1"
-                  placeholderTextColor={COLORS.textSecondary}
+                  placeholderTextColor={COLORS.mutedForeground}
                   textAlign="center"
                 />
               </View>
@@ -499,12 +496,12 @@ export default function NewLogScreen({ navigation }: Props) {
     if (resultType === 'free') {
       return (
         <TextInput
-          style={styles.freeInput}
+          className="min-h-[120px] p-3.5 text-sm font-semibold leading-[22px] text-foreground"
           multiline
           value={freeText}
           onChangeText={setFreeText}
           placeholder="결과를 자유롭게 입력하세요"
-          placeholderTextColor={COLORS.textSecondary}
+          placeholderTextColor={COLORS.mutedForeground}
           textAlignVertical="top"
         />
       );
@@ -516,28 +513,28 @@ export default function NewLogScreen({ navigation }: Props) {
     const gameName = selectedGame?.name ?? gameQuery.trim();
     return (
       <View>
-        <View style={styles.questionBox}>
-          <Text style={styles.stepLabel}>4 / 4</Text>
-          <Text style={styles.question}>한 마디 후기</Text>
-          <Text style={styles.questionSub}>게임에 대한 느낌을 남겨보세요 (선택)</Text>
+        <View className="mb-6 mt-4">
+          <Text className="mb-2 text-xs font-extrabold tracking-wide text-foreground">4 / 4</Text>
+          <Text className="mb-1 text-[23px] font-extrabold leading-[31px] text-foreground">한 마디 후기</Text>
+          <Text className="text-[13px] font-semibold text-muted-foreground">게임에 대한 느낌을 남겨보세요 (선택)</Text>
         </View>
 
         {/* Summary card */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryGameName}>{gameName || '-'}</Text>
-          <Text style={styles.summaryMeta}>
+        <View className="mb-5 rounded-xl bg-accent p-4">
+          <Text className="mb-1 text-lg font-extrabold text-accent-foreground">{gameName || '-'}</Text>
+          <Text className="text-xs font-semibold text-foreground">
             {date}  ·  {players.length}명  ·  {RESULT_TYPES.find(r => r.value === resultType)?.label}
           </Text>
         </View>
 
-        <View style={styles.sectionBlock}>
+        <View className="mb-6">
           <TextInput
-            style={styles.reviewInput}
+            className="min-h-[120px] rounded-xl border border-border bg-card p-3.5 text-[15px] font-semibold leading-6 text-foreground"
             multiline
             value={review}
             onChangeText={setReview}
             placeholder="오늘 게임은 어땠나요?"
-            placeholderTextColor={COLORS.textSecondary}
+            placeholderTextColor={COLORS.mutedForeground}
             textAlignVertical="top"
           />
         </View>
@@ -548,21 +545,21 @@ export default function NewLogScreen({ navigation }: Props) {
   const nextLabel = stepIndex === STEPS.length - 1 ? '저장하기' : '다음 →';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView className="flex-1 bg-background">
       {/* Progress dots */}
-      <View style={styles.progressTrack}>
+      <View className="mt-4 flex-row gap-1.5 self-center">
         {STEPS.map((_, i) => (
           <View
             key={i}
-            style={[styles.progressDot, i <= stepIndex && styles.progressDotActive]}
+            className={cn('h-1.5 w-6 rounded-full bg-border', i <= stepIndex && 'bg-primary')}
           />
         ))}
       </View>
 
       {/* Back */}
-      <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-        <ArrowLeftIcon size={20} color={COLORS.woodDark} />
-        <Text style={styles.backText}>이전</Text>
+      <TouchableOpacity onPress={handleBack} className="flex-row items-center gap-1.5 self-start px-6 py-2.5">
+        <ArrowLeftIcon size={20} color={COLORS.foreground} />
+        <Text className="text-sm font-bold text-foreground">이전</Text>
       </TouchableOpacity>
 
       <KeyboardAvoidingView
@@ -572,7 +569,7 @@ export default function NewLogScreen({ navigation }: Props) {
       >
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerClassName="px-6 pb-8"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -583,332 +580,23 @@ export default function NewLogScreen({ navigation }: Props) {
         </ScrollView>
 
         {/* Next / Save button */}
-        <View style={styles.nextArea}>
-          <View style={styles.nextBtnWrapper}>
-            <TouchableOpacity
-              style={[styles.nextBtn, !canProceed && styles.nextBtnDisabled]}
-              onPress={handleNext}
-              disabled={!canProceed || saving}
-              activeOpacity={0.85}
-            >
-              {saving ? (
-                <ActivityIndicator color={COLORS.textOnWood} />
-              ) : (
-                <Text style={styles.nextBtnText}>{nextLabel}</Text>
-              )}
-            </TouchableOpacity>
-            <View style={[styles.nextBtnBottom, !canProceed && styles.nextBtnBottomDisabled]} />
-          </View>
+        <View className="px-6 pb-4 pt-2">
+          <TouchableOpacity
+            onPress={handleNext}
+            disabled={!canProceed || saving}
+            activeOpacity={0.85}
+            className={cn('items-center rounded-xl py-[18px]', canProceed ? 'bg-primary' : 'bg-muted')}
+          >
+            {saving ? (
+              <ActivityIndicator color={COLORS.primaryForeground} />
+            ) : (
+              <Text className={cn('text-lg font-bold', canProceed ? 'text-primary-foreground' : 'text-muted-foreground')}>
+                {nextLabel}
+              </Text>
+            )}
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-
-  progressTrack: {
-    flexDirection: 'row', gap: 8,
-    marginTop: 16, alignSelf: 'center',
-  },
-  progressDot: {
-    width: 28, height: 10, borderRadius: 5,
-    backgroundColor: COLORS.woodLight,
-    borderWidth: 1.5, borderColor: COLORS.woodMid,
-  },
-  progressDotActive: { backgroundColor: COLORS.wood, borderColor: COLORS.woodDark },
-
-  backBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: 10, paddingHorizontal: 24, alignSelf: 'flex-start',
-  },
-  backText: { fontSize: 14, fontWeight: '700', color: COLORS.woodDark },
-
-  scrollContent: { paddingHorizontal: 24, paddingBottom: 32 },
-
-  questionBox: { marginTop: 16, marginBottom: 24 },
-  stepLabel: {
-    fontSize: 12, fontWeight: '800', color: COLORS.textSecondary,
-    letterSpacing: 1, marginBottom: 8,
-  },
-  question: {
-    fontSize: 24, fontWeight: '900', color: COLORS.textPrimary,
-    lineHeight: 32, marginBottom: 4,
-  },
-  questionSub: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
-
-  // Next button
-  nextArea: { paddingHorizontal: 24, paddingBottom: 16, paddingTop: 8 },
-  nextBtnWrapper: { ...BLOCK_SHADOW_SM },
-  nextBtn: {
-    backgroundColor: COLORS.wood,
-    borderRadius: RADIUS.md,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.woodDark,
-    borderBottomWidth: 0,
-  },
-  nextBtnDisabled: { backgroundColor: COLORS.bgDeep, borderColor: COLORS.woodLight },
-  nextBtnBottom: {
-    height: 7, backgroundColor: COLORS.woodDark,
-    borderBottomLeftRadius: RADIUS.md,
-    borderBottomRightRadius: RADIUS.md,
-  },
-  nextBtnBottomDisabled: { backgroundColor: COLORS.woodLight },
-  nextBtnText: { fontSize: 16, fontWeight: '900', color: COLORS.textOnWood },
-
-  // ─── Step 0: Game search ───────────────────────────────────────
-  selectedGameRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12,
-  },
-  selectedGameBadge: {
-    flex: 1,
-    backgroundColor: '#B5D5A0',
-    borderRadius: RADIUS.sm,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 2,
-    borderColor: '#4E9E6B',
-  },
-  selectedGameText: { fontSize: 14, fontWeight: '800', color: '#2E5E3A' },
-  clearBtn: {
-    paddingHorizontal: 10, paddingVertical: 8,
-    backgroundColor: COLORS.bgDeep,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1.5, borderColor: COLORS.woodLight,
-  },
-  clearBtnText: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
-
-  searchRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  searchInputWrapper: {
-    flex: 1,
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.sm,
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  searchInput: { fontSize: 15, color: COLORS.textPrimary, fontWeight: '600' },
-  searchBtnWrapper: {},
-  searchBtn: {
-    backgroundColor: COLORS.paintBlue,
-    borderRadius: RADIUS.sm,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderWidth: 2,
-    borderColor: '#2D5E8A',
-    borderBottomWidth: 0,
-  },
-  searchBtnBottom: {
-    height: 5,
-    backgroundColor: '#2D5E8A',
-    borderBottomLeftRadius: RADIUS.sm,
-    borderBottomRightRadius: RADIUS.sm,
-  },
-  searchBtnText: { fontSize: 14, fontWeight: '800', color: COLORS.textOnWood },
-
-  searchingBox: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  searchingText: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '600' },
-
-  resultsList: {
-    borderRadius: RADIUS.md,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-    backgroundColor: COLORS.cardLight,
-  },
-  resultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: COLORS.woodLight,
-  },
-  resultItemName: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, flex: 1 },
-  resultItemYear: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '600', marginTop: 2 },
-  resultItemArrow: { fontSize: 20, color: COLORS.woodMid, fontWeight: '300' },
-
-  // ─── Step 1: Session ──────────────────────────────────────────
-  sectionBlock: { marginBottom: 24 },
-  sectionTitle: {
-    fontSize: 14, fontWeight: '800', color: COLORS.textSecondary,
-    marginBottom: 10, letterSpacing: 0.5,
-  },
-  fieldWrapper: {
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.sm,
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  fieldInput: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
-
-  playersList: { gap: 8, marginBottom: 10 },
-  playerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  playerChip: {
-    flex: 1,
-    backgroundColor: COLORS.woodLight,
-    borderRadius: RADIUS.sm,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1.5, borderColor: COLORS.woodMid,
-  },
-  playerChipText: { fontSize: 14, fontWeight: '700', color: COLORS.woodDark },
-  removePlayerBtn: {
-    width: 34, height: 34,
-    backgroundColor: '#F0B0A8',
-    borderRadius: RADIUS.sm,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: COLORS.paintRed,
-  },
-  removePlayerBtnText: { fontSize: 18, color: COLORS.paintRed, fontWeight: '700' },
-
-  addPlayerRow: { flexDirection: 'row', gap: 8 },
-  addPlayerInput: {
-    flex: 1,
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.sm,
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    fontSize: 14,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-  },
-  addPlayerBtnWrapper: {},
-  addPlayerBtn: {
-    backgroundColor: COLORS.wood,
-    borderRadius: RADIUS.sm,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    borderWidth: 2,
-    borderColor: COLORS.woodDark,
-    borderBottomWidth: 0,
-  },
-  addPlayerBtnBottom: {
-    height: 5, backgroundColor: COLORS.woodDark,
-    borderBottomLeftRadius: RADIUS.sm,
-    borderBottomRightRadius: RADIUS.sm,
-  },
-  addPlayerBtnText: { fontSize: 13, fontWeight: '800', color: COLORS.textOnWood },
-
-  // ─── Step 2: Result ──────────────────────────────────────────
-  resultTypeGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24,
-  },
-  resultTypeWrapper: { width: '47%' },
-  resultTypeBlock: {
-    borderRadius: RADIUS.md,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.1)',
-    borderBottomWidth: 0,
-  },
-  resultTypeBlockActive: { borderColor: 'rgba(0,0,0,0.15)' },
-  resultTypeBottom: {
-    height: 6,
-    borderBottomLeftRadius: RADIUS.md,
-    borderBottomRightRadius: RADIUS.md,
-  },
-  resultTypeLabel: {
-    fontSize: 17, fontWeight: '900', color: COLORS.textPrimary, marginBottom: 2,
-  },
-  resultTypeDesc: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
-
-  resultTableSection: {
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.md,
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-    overflow: 'hidden',
-  },
-  resultTable: {},
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.woodLight,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  tableHeaderCell: { fontSize: 12, fontWeight: '800', color: COLORS.woodDark },
-  tableHeaderName: { flex: 2 },
-  tableHeaderValue: { flex: 1, textAlign: 'center' },
-
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderTopWidth: 1,
-    borderColor: COLORS.woodLight,
-  },
-  tablePlayerName: {
-    flex: 2, fontSize: 14, fontWeight: '700', color: COLORS.textPrimary,
-  },
-  scoreInput: {
-    flex: 1,
-    borderWidth: 2, borderColor: COLORS.woodLight,
-    borderRadius: RADIUS.sm,
-    paddingVertical: 6, paddingHorizontal: 4,
-    fontSize: 15, fontWeight: '800', color: COLORS.textPrimary,
-    backgroundColor: COLORS.bg,
-  },
-
-  winLossButtons: { flex: 2, flexDirection: 'row', gap: 6, justifyContent: 'flex-end' },
-  winLossBtn: {
-    width: 40, height: 36,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: COLORS.woodLight,
-    backgroundColor: COLORS.bgDeep,
-  },
-  winLossBtnText: { fontSize: 15, fontWeight: '900', color: COLORS.textSecondary },
-  winLossBtnTextActive: { color: COLORS.textOnWood },
-
-  freeInput: {
-    minHeight: 120,
-    padding: 14,
-    fontSize: 14, fontWeight: '600', color: COLORS.textPrimary,
-    lineHeight: 22,
-  },
-
-  // ─── Step 3: Review ──────────────────────────────────────────
-  summaryCard: {
-    backgroundColor: COLORS.woodLight,
-    borderRadius: RADIUS.md,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: COLORS.woodMid,
-    marginBottom: 20,
-  },
-  summaryGameName: {
-    fontSize: 18, fontWeight: '900', color: COLORS.woodDark, marginBottom: 4,
-  },
-  summaryMeta: { fontSize: 12, fontWeight: '600', color: COLORS.woodMid },
-  reviewInput: {
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.md,
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-    padding: 14,
-    minHeight: 120,
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    lineHeight: 24,
-  },
-});

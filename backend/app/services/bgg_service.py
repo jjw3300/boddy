@@ -153,6 +153,15 @@ async def _fetch_game_details(game_ids: list[str]) -> list[dict]:
     return cached_items + fetched_items
 
 
+def _auth_headers() -> dict[str, str]:
+    """BGG는 2025-07부터 XML API에 앱 등록 토큰을 요구함.
+    https://boardgamegeek.com/using_the_xml_api 에서 발급받아 .env의
+    BGG_API_TOKEN에 설정하면 자동으로 실린다."""
+    if settings.bgg_api_token:
+        return {"Authorization": f"Bearer {settings.bgg_api_token}"}
+    return {}
+
+
 async def _get_with_retry(
     url: str,
     client: httpx.AsyncClient | None = None,
@@ -166,7 +175,14 @@ async def _get_with_retry(
     try:
         for attempt in range(MAX_RETRIES):
             try:
-                response = await client.get(url)
+                response = await client.get(url, headers=_auth_headers())
+                if response.status_code in (401, 403):
+                    # 인증 문제는 재시도해도 해결되지 않음 — 즉시 실패
+                    raise RuntimeError(
+                        "BGG API 인증 실패: BGG_API_TOKEN이 없거나 유효하지 않습니다. "
+                        "https://boardgamegeek.com/using_the_xml_api 에서 토큰을 발급받아 "
+                        "backend/.env의 BGG_API_TOKEN에 설정하세요."
+                    )
                 response.raise_for_status()
                 return xmltodict.parse(response.text)
             except (httpx.TimeoutException, httpx.HTTPStatusError) as e:

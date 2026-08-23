@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, Image, ScrollView,
-  TouchableOpacity, StyleSheet, SafeAreaView, Alert,
+  TouchableOpacity, SafeAreaView, Alert,
   ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,8 +9,10 @@ import { RouteProp } from '@react-navigation/native';
 import { LogStackParamList } from '../types/navigation';
 import { PlayLog, ResultType, WinLossResult } from '../types/log';
 import { getLog, deleteLog } from '../services/logStorage';
-import { COLORS, BLOCK_SHADOW_SM, RADIUS } from '../design';
+import { COLORS } from '../design';
 import { ArrowLeftIcon, DiceIcon } from '../components/Icon';
+import { Button } from '../components/Button';
+import { cn } from '../lib/utils';
 
 const RESULT_TYPE_LABELS: Record<ResultType, string> = {
   score: '점수',
@@ -19,10 +21,10 @@ const RESULT_TYPE_LABELS: Record<ResultType, string> = {
   free: '자유',
 };
 
-const WIN_LOSS_LABEL: Record<WinLossResult, { text: string; color: string; bg: string }> = {
-  win:  { text: 'O', color: '#2E6E47', bg: '#B5D5A0' },
-  draw: { text: '△', color: COLORS.woodMid, bg: COLORS.woodLight },
-  loss: { text: 'X', color: COLORS.paintRed, bg: '#F0B0A8' },
+const WIN_LOSS_LABEL: Record<WinLossResult, { text: string; textClass: string; bgClass: string }> = {
+  win:  { text: 'O', textClass: 'text-green-700', bgClass: 'bg-green-50' },
+  draw: { text: '△', textClass: 'text-muted-foreground', bgClass: 'bg-muted' },
+  loss: { text: 'X', textClass: 'text-red-600', bgClass: 'bg-red-50' },
 };
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉'];
@@ -37,7 +39,7 @@ function getPlayerName(log: PlayLog, player_id: string): string {
 }
 
 function ResultSection({ log }: { log: PlayLog }) {
-  const { result_data, players } = log;
+  const { result_data } = log;
 
   if (result_data.type === 'score') {
     const sorted = [...result_data.entries].sort((a, b) => {
@@ -48,21 +50,21 @@ function ResultSection({ log }: { log: PlayLog }) {
     const maxScore = sorted[0]?.score ?? null;
 
     return (
-      <View style={styles.resultTable}>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, styles.cellName]}>참여자</Text>
-          <Text style={[styles.tableHeaderCell, styles.cellValue]}>점수</Text>
+      <View>
+        <View className="flex-row bg-muted px-3.5 py-2.5">
+          <Text className="flex-[2] text-xs font-extrabold text-muted-foreground">참여자</Text>
+          <Text className="flex-1 text-xs font-extrabold text-muted-foreground">점수</Text>
         </View>
         {sorted.map(entry => {
           const isWinner = entry.score !== null && entry.score === maxScore;
           return (
-            <View key={entry.player_id} style={styles.tableRow}>
-              <Text style={[styles.cellName, styles.playerName]}>
+            <View key={entry.player_id} className="flex-row items-center border-t border-border px-3.5 py-3">
+              <Text className="flex-[2] text-sm font-bold text-foreground">
                 {getPlayerName(log, entry.player_id)}
               </Text>
-              <View style={[styles.cellValue, styles.scoreCell]}>
-                {isWinner && <Text style={styles.trophyIcon}>🏆</Text>}
-                <Text style={[styles.scoreText, isWinner && styles.scoreTextWinner]}>
+              <View className="flex-1 flex-row items-center gap-1">
+                {isWinner && <Text className="text-base">🏆</Text>}
+                <Text className={cn('text-base font-extrabold text-foreground', isWinner && 'text-lg')}>
                   {entry.score ?? '-'}
                 </Text>
               </View>
@@ -75,21 +77,21 @@ function ResultSection({ log }: { log: PlayLog }) {
 
   if (result_data.type === 'win_loss') {
     return (
-      <View style={styles.resultTable}>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, styles.cellName]}>참여자</Text>
-          <Text style={[styles.tableHeaderCell, styles.cellValue]}>결과</Text>
+      <View>
+        <View className="flex-row bg-muted px-3.5 py-2.5">
+          <Text className="flex-[2] text-xs font-extrabold text-muted-foreground">참여자</Text>
+          <Text className="flex-1 text-xs font-extrabold text-muted-foreground">결과</Text>
         </View>
         {result_data.entries.map(entry => {
-          const style = WIN_LOSS_LABEL[entry.result];
+          const badge = WIN_LOSS_LABEL[entry.result];
           return (
-            <View key={entry.player_id} style={styles.tableRow}>
-              <Text style={[styles.cellName, styles.playerName]}>
+            <View key={entry.player_id} className="flex-row items-center border-t border-border px-3.5 py-3">
+              <Text className="flex-[2] text-sm font-bold text-foreground">
                 {getPlayerName(log, entry.player_id)}
               </Text>
-              <View style={styles.cellValue}>
-                <View style={[styles.winLossBadge, { backgroundColor: style.bg, borderColor: style.color }]}>
-                  <Text style={[styles.winLossBadgeText, { color: style.color }]}>{style.text}</Text>
+              <View className="flex-1 flex-row items-center">
+                <View className={cn('h-[30px] w-9 items-center justify-center rounded-lg', badge.bgClass)}>
+                  <Text className={cn('text-[15px] font-black', badge.textClass)}>{badge.text}</Text>
                 </View>
               </View>
             </View>
@@ -106,22 +108,22 @@ function ResultSection({ log }: { log: PlayLog }) {
       return a.rank - b.rank;
     });
     return (
-      <View style={styles.resultTable}>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, styles.cellName]}>참여자</Text>
-          <Text style={[styles.tableHeaderCell, styles.cellValue]}>순위</Text>
+      <View>
+        <View className="flex-row bg-muted px-3.5 py-2.5">
+          <Text className="flex-[2] text-xs font-extrabold text-muted-foreground">참여자</Text>
+          <Text className="flex-1 text-xs font-extrabold text-muted-foreground">순위</Text>
         </View>
         {sorted.map(entry => {
           const rank = entry.rank;
           const medal = rank !== null && rank >= 1 && rank <= 3 ? RANK_MEDALS[rank - 1] : null;
           return (
-            <View key={entry.player_id} style={styles.tableRow}>
-              <Text style={[styles.cellName, styles.playerName]}>
+            <View key={entry.player_id} className="flex-row items-center border-t border-border px-3.5 py-3">
+              <Text className="flex-[2] text-sm font-bold text-foreground">
                 {getPlayerName(log, entry.player_id)}
               </Text>
-              <View style={[styles.cellValue, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                {medal && <Text style={styles.medalText}>{medal}</Text>}
-                <Text style={styles.rankText}>
+              <View className="flex-1 flex-row items-center gap-1">
+                {medal && <Text className="text-lg">{medal}</Text>}
+                <Text className="text-[15px] font-extrabold text-foreground">
                   {rank !== null ? `${rank}위` : '-'}
                 </Text>
               </View>
@@ -134,8 +136,8 @@ function ResultSection({ log }: { log: PlayLog }) {
 
   if (result_data.type === 'free') {
     return (
-      <View style={styles.freeCard}>
-        <Text style={styles.freeText}>{result_data.text || '입력된 내용이 없어요.'}</Text>
+      <View className="p-3.5">
+        <Text className="text-sm font-semibold leading-[22px] text-foreground">{result_data.text || '입력된 내용이 없어요.'}</Text>
       </View>
     );
   }
@@ -176,9 +178,9 @@ export default function LogDetailScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color={COLORS.wood} />
+      <SafeAreaView className="flex-1 bg-background">
+        <View className="flex-1 items-center justify-center gap-4">
+          <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       </SafeAreaView>
     );
@@ -186,258 +188,98 @@ export default function LogDetailScreen({ navigation, route }: Props) {
 
   if (!log) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerBox}>
-          <Text style={styles.errorText}>기록을 찾을 수 없어요.</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtnStandalone}>
-            <Text style={styles.backBtnStandaloneText}>돌아가기</Text>
-          </TouchableOpacity>
+      <SafeAreaView className="flex-1 bg-background">
+        <View className="flex-1 items-center justify-center gap-4">
+          <Text className="text-base font-bold text-foreground">기록을 찾을 수 없어요.</Text>
+          <Button label="돌아가기" onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView className="flex-1 bg-background">
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ArrowLeftIcon size={20} color={COLORS.woodDark} />
-          <Text style={styles.backText}>뒤로</Text>
+      <View className="flex-row items-center justify-between px-6 pb-1 pt-3.5">
+        <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center gap-1.5 py-1.5">
+          <ArrowLeftIcon size={20} color={COLORS.foreground} />
+          <Text className="text-sm font-bold text-foreground">뒤로</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
-          <Text style={styles.deleteBtnText}>삭제</Text>
+        <TouchableOpacity onPress={handleDelete} className="rounded-lg border border-border bg-red-50 px-3 py-1.5">
+          <Text className="text-[13px] font-extrabold text-red-600">삭제</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerClassName="px-6 pb-12"
         showsVerticalScrollIndicator={false}
       >
         {/* Game thumbnail + name */}
-        <View style={styles.gameHeader}>
-          <View style={styles.thumbnailWrapper}>
-            <View style={styles.thumbnailBlock}>
-              {log.game_thumbnail ? (
-                <Image source={{ uri: log.game_thumbnail }} style={styles.thumbnail} resizeMode="cover" />
-              ) : (
-                <View style={styles.thumbnailPlaceholder}>
-                  <DiceIcon size={40} color={COLORS.woodMid} />
-                </View>
-              )}
-            </View>
-            <View style={styles.thumbnailBlockBottom} />
+        <View className="mb-7 mt-3 flex-row items-start gap-4">
+          <View className="h-[90px] w-[90px] overflow-hidden rounded-xl border border-border">
+            {log.game_thumbnail ? (
+              <Image source={{ uri: log.game_thumbnail }} className="h-[90px] w-[90px]" resizeMode="cover" />
+            ) : (
+              <View className="h-[90px] w-[90px] items-center justify-center bg-muted">
+                <DiceIcon size={40} color={COLORS.mutedForeground} />
+              </View>
+            )}
           </View>
-          <View style={styles.gameNameBox}>
-            <Text style={styles.gameName}>{log.game_name}</Text>
-            <View style={styles.dateBadge}>
-              <Text style={styles.dateBadgeText}>📅 {log.played_at}</Text>
+          <View className="flex-1 justify-center gap-1.5">
+            <Text className="text-xl font-extrabold leading-[26px] text-foreground">{log.game_name}</Text>
+            <View className="self-start rounded-lg border border-border bg-accent px-2.5 py-1">
+              <Text className="text-xs font-bold text-foreground">📅 {log.played_at}</Text>
             </View>
             {log.bgg_id && (
-              <Text style={styles.bggText}>BGG #{log.bgg_id}</Text>
+              <Text className="text-[11px] font-semibold text-muted-foreground">BGG #{log.bgg_id}</Text>
             )}
           </View>
         </View>
 
         {/* Players + Result */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <View style={styles.sectionAccent} />
-            <Text style={styles.sectionTitle}>참여자 · {RESULT_TYPE_LABELS[log.result_type]}</Text>
+        <View className="mb-6">
+          <View className="mb-2.5 flex-row items-center gap-2">
+            <View className="h-5 w-[5px] rounded-[3px] bg-primary" />
+            <Text className="text-[15px] font-extrabold text-foreground">참여자 · {RESULT_TYPE_LABELS[log.result_type]}</Text>
           </View>
-          <View style={styles.tableCard}>
+          <View className="overflow-hidden rounded-xl border border-border bg-card">
             <ResultSection log={log} />
           </View>
         </View>
 
         {/* Review */}
         {log.review ? (
-          <View style={styles.section}>
-            <View style={styles.sectionTitleRow}>
-              <View style={styles.sectionAccent} />
-              <Text style={styles.sectionTitle}>후기</Text>
+          <View className="mb-6">
+            <View className="mb-2.5 flex-row items-center gap-2">
+              <View className="h-5 w-[5px] rounded-[3px] bg-primary" />
+              <Text className="text-[15px] font-extrabold text-foreground">후기</Text>
             </View>
-            <View style={styles.reviewCard}>
-              <Text style={styles.reviewText}>{log.review}</Text>
+            <View className="rounded-xl border border-border bg-card p-4">
+              <Text className="text-sm font-semibold leading-[22px] text-foreground">{log.review}</Text>
             </View>
           </View>
         ) : null}
 
         {/* Players list */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <View style={styles.sectionAccent} />
-            <Text style={styles.sectionTitle}>참여자 목록</Text>
+        <View className="mb-6">
+          <View className="mb-2.5 flex-row items-center gap-2">
+            <View className="h-5 w-[5px] rounded-[3px] bg-primary" />
+            <Text className="text-[15px] font-extrabold text-foreground">참여자 목록</Text>
           </View>
-          <View style={styles.playersRow}>
+          <View className="flex-row flex-wrap gap-2">
             {log.players.map(p => (
-              <View key={p.id} style={styles.playerChip}>
-                <Text style={styles.playerChipText}>{p.name}</Text>
+              <View key={p.id} className="rounded-lg border border-border bg-accent px-3 py-1.5">
+                <Text className="text-[13px] font-extrabold text-foreground">{p.name}</Text>
               </View>
             ))}
           </View>
         </View>
 
         {/* Timestamps */}
-        <Text style={styles.timestampText}>
+        <Text className="mt-2 text-right text-[11px] font-semibold text-muted-foreground">
           기록: {new Date(log.created_at).toLocaleString('ko-KR')}
         </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  centerBox: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  errorText: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
-  backBtnStandalone: {
-    backgroundColor: COLORS.wood, borderRadius: RADIUS.sm,
-    paddingVertical: 10, paddingHorizontal: 20,
-  },
-  backBtnStandaloneText: { fontSize: 14, fontWeight: '800', color: COLORS.textOnWood },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 14,
-    paddingBottom: 4,
-  },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 },
-  backText: { fontSize: 14, fontWeight: '700', color: COLORS.woodDark },
-  deleteBtn: {
-    backgroundColor: '#F0B0A8',
-    borderRadius: RADIUS.sm,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderWidth: 1.5,
-    borderColor: COLORS.paintRed,
-  },
-  deleteBtnText: { fontSize: 13, fontWeight: '800', color: COLORS.paintRed },
-
-  content: { paddingHorizontal: 24, paddingBottom: 48 },
-
-  // Game header
-  gameHeader: { flexDirection: 'row', gap: 16, marginTop: 12, marginBottom: 28, alignItems: 'flex-start' },
-  thumbnailWrapper: { ...BLOCK_SHADOW_SM },
-  thumbnailBlock: {
-    width: 90, height: 90,
-    borderRadius: RADIUS.md,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    overflow: 'hidden',
-    borderWidth: 2.5,
-    borderColor: COLORS.woodMid,
-    borderBottomWidth: 0,
-  },
-  thumbnailBlockBottom: {
-    height: 7, width: 90,
-    backgroundColor: COLORS.woodMid,
-    borderBottomLeftRadius: RADIUS.md,
-    borderBottomRightRadius: RADIUS.md,
-  },
-  thumbnail: { width: 90, height: 90 },
-  thumbnailPlaceholder: {
-    width: 90, height: 90,
-    backgroundColor: COLORS.bgDeep,
-    alignItems: 'center', justifyContent: 'center',
-  },
-
-  gameNameBox: { flex: 1, justifyContent: 'center', gap: 6 },
-  gameName: { fontSize: 20, fontWeight: '900', color: COLORS.textPrimary, lineHeight: 26 },
-  dateBadge: {
-    backgroundColor: COLORS.woodLight,
-    borderRadius: RADIUS.sm,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    alignSelf: 'flex-start',
-    borderWidth: 1.5,
-    borderColor: COLORS.woodMid,
-  },
-  dateBadgeText: { fontSize: 12, fontWeight: '700', color: COLORS.woodDark },
-  bggText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '600' },
-
-  // Section
-  section: { marginBottom: 24 },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  sectionAccent: { width: 5, height: 20, backgroundColor: COLORS.wood, borderRadius: 3 },
-  sectionTitle: { fontSize: 15, fontWeight: '900', color: COLORS.textPrimary },
-
-  // Result table card
-  tableCard: {
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.md,
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-    overflow: 'hidden',
-  },
-  resultTable: {},
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.woodLight,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  tableHeaderCell: { fontSize: 12, fontWeight: '800', color: COLORS.woodDark },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderTopWidth: 1,
-    borderColor: COLORS.woodLight,
-  },
-  cellName: { flex: 2 },
-  cellValue: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  playerName: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-
-  scoreCell: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  trophyIcon: { fontSize: 16 },
-  scoreText: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
-  scoreTextWinner: { color: '#2D5E8A', fontSize: 18 },
-
-  winLossBadge: {
-    width: 36, height: 30,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2,
-  },
-  winLossBadgeText: { fontSize: 15, fontWeight: '900' },
-
-  medalText: { fontSize: 18 },
-  rankText: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
-
-  freeCard: {
-    padding: 14,
-  },
-  freeText: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, lineHeight: 22 },
-
-  // Review
-  reviewCard: {
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.md,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: COLORS.woodLight,
-  },
-  reviewText: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, lineHeight: 22 },
-
-  // Players list
-  playersRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  playerChip: {
-    backgroundColor: COLORS.woodLight,
-    borderRadius: RADIUS.sm,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderWidth: 1.5,
-    borderColor: COLORS.woodMid,
-  },
-  playerChipText: { fontSize: 13, fontWeight: '700', color: COLORS.woodDark },
-
-  timestampText: {
-    fontSize: 11, color: COLORS.textSecondary, fontWeight: '600',
-    textAlign: 'right', marginTop: 8,
-  },
-});

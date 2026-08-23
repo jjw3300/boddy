@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TextInput, TouchableOpacity,
   SafeAreaView, ScrollView, Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
-import { COLORS, RADIUS } from '../../design';
+import { COLORS } from '../../design';
 import { ArrowLeftIcon, TrophyIcon } from '../../components/Icon';
+import { Button } from '../../components/Button';
 
 interface Props {
   navigation: NativeStackNavigationProp<ToolkitStackParamList, 'Scoreboard'>;
@@ -21,8 +22,8 @@ interface Player {
 let _id = 0;
 function nextId() { return String(++_id); }
 
-const RANK_COLORS = ['#E8A020', '#9E9E9E', '#C8640A'];
-const RANK_BG    = ['#FFF0B0', '#F0F0F0', '#F0D0A8'];
+const RANK_FG = ['#D97706', '#78716C', '#C8640A'];
+const RANK_BG = ['#FFFBEB', '#F5F5F4', '#FBEADB'];
 
 export default function ScoreboardScreen({ navigation }: Props) {
   const [players, setPlayers] = useState<Player[]>([
@@ -83,62 +84,65 @@ export default function ScoreboardScreen({ navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ArrowLeftIcon size={20} color={COLORS.woodDark} />
-          <Text style={styles.backText}>도구 모음</Text>
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-row items-center justify-between px-4 pt-2">
+        <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center gap-1.5 px-2 py-2.5">
+          <ArrowLeftIcon size={20} color={COLORS.foreground} />
+          <Text className="text-sm font-semibold text-foreground">도구 모음</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={resetAll} style={styles.resetBtn}>
-          <Text style={styles.resetBtnText}>초기화</Text>
+        <TouchableOpacity onPress={resetAll} className="rounded-lg border border-border bg-red-50 px-3.5 py-2">
+          <Text className="text-[13px] font-extrabold text-red-600">초기화</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.headerRow}>
-        <TrophyIcon size={24} color={COLORS.woodDark} fill={COLORS.woodMid} />
-        <Text style={styles.title}>점수판</Text>
+      <View className="flex-row items-center gap-2 px-6 pb-4">
+        <TrophyIcon size={22} color={COLORS.foreground} fill="transparent" />
+        <Text className="text-xl font-bold tracking-tight text-foreground">점수판</Text>
       </View>
 
       <ScrollView
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
+        className="flex-1"
+        contentContainerClassName="gap-2.5 px-4 pb-8"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {sorted.map((player, idx) => {
+        {sorted.map(player => {
           const rank = getRank(player.id);
           const isTop3 = rank <= 3;
-          const rankColor = isTop3 ? RANK_COLORS[rank - 1] : COLORS.woodMid;
-          const rankBg   = isTop3 ? RANK_BG[rank - 1] : COLORS.bgDeep;
+          const rankFg = isTop3 ? RANK_FG[rank - 1] : COLORS.mutedForeground;
+          const rankBg = isTop3 ? RANK_BG[rank - 1] : '#F5F5F4';
 
           return (
-            <View key={player.id} style={styles.row}>
+            <View key={player.id} className="flex-row items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 py-3">
               {/* 순위 뱃지 */}
-              <View style={[styles.rankBadge, { backgroundColor: rankBg, borderColor: rankColor }]}>
-                <Text style={[styles.rankText, { color: rankColor }]}>{rank}</Text>
+              <View className="h-[30px] w-[30px] items-center justify-center rounded-full" style={{ backgroundColor: rankBg }}>
+                <Text className="text-[13px] font-extrabold" style={{ color: rankFg }}>{rank}</Text>
               </View>
 
               {/* 이름 */}
               <TextInput
-                style={styles.nameInput}
+                className="flex-1 rounded-lg border border-border bg-background px-2 py-1 text-sm font-bold text-foreground"
                 value={player.name}
                 onChangeText={t => updateName(player.id, t)}
                 selectTextOnFocus
               />
 
               {/* -10 */}
-              <TouchableOpacity style={styles.adjBtn} onPress={() => adjustScore(player.id, -10)}>
-                <Text style={styles.adjBtnTextSm}>-10</Text>
+              <TouchableOpacity className="px-1 py-1.5" onPress={() => adjustScore(player.id, -10)}>
+                <Text className="text-[11px] font-extrabold text-muted-foreground">-10</Text>
               </TouchableOpacity>
 
               {/* - + score + + */}
-              <View style={styles.scoreCtrl}>
-                <TouchableOpacity style={styles.stepBtn} onPress={() => adjustScore(player.id, -1)}>
-                  <Text style={styles.stepBtnText}>－</Text>
+              <View className="flex-row items-center gap-0.5">
+                <TouchableOpacity
+                  className="h-[30px] w-[30px] items-center justify-center rounded-md bg-primary"
+                  onPress={() => adjustScore(player.id, -1)}
+                >
+                  <Text className="text-lg font-extrabold text-primary-foreground">－</Text>
                 </TouchableOpacity>
 
                 <TextInput
-                  style={styles.scoreInput}
+                  className="h-[30px] w-[46px] rounded-md border border-border bg-background text-center text-base font-extrabold text-foreground"
                   value={String(player.score)}
                   onChangeText={t => setScore(player.id, t)}
                   keyboardType="numeric"
@@ -146,23 +150,26 @@ export default function ScoreboardScreen({ navigation }: Props) {
                   textAlign="center"
                 />
 
-                <TouchableOpacity style={styles.stepBtn} onPress={() => adjustScore(player.id, 1)}>
-                  <Text style={styles.stepBtnText}>＋</Text>
+                <TouchableOpacity
+                  className="h-[30px] w-[30px] items-center justify-center rounded-md bg-primary"
+                  onPress={() => adjustScore(player.id, 1)}
+                >
+                  <Text className="text-lg font-extrabold text-primary-foreground">＋</Text>
                 </TouchableOpacity>
               </View>
 
               {/* +10 */}
-              <TouchableOpacity style={styles.adjBtn} onPress={() => adjustScore(player.id, 10)}>
-                <Text style={styles.adjBtnTextSm}>+10</Text>
+              <TouchableOpacity className="px-1 py-1.5" onPress={() => adjustScore(player.id, 10)}>
+                <Text className="text-[11px] font-extrabold text-muted-foreground">+10</Text>
               </TouchableOpacity>
 
               {/* 삭제 */}
               {players.length > 1 && (
                 <TouchableOpacity
-                  style={styles.removeBtn}
+                  className="h-7 w-7 items-center justify-center rounded-full bg-red-50"
                   onPress={() => removePlayer(player.id)}
                 >
-                  <Text style={styles.removeBtnText}>×</Text>
+                  <Text className="text-base font-bold text-red-600">×</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -170,137 +177,20 @@ export default function ScoreboardScreen({ navigation }: Props) {
         })}
 
         {/* 플레이어 추가 */}
-        <View style={styles.addRow}>
+        <View className="mt-1 flex-row items-center gap-2">
           <TextInput
             ref={inputRef}
-            style={styles.addInput}
+            className="h-11 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-semibold text-foreground"
             value={nameInput}
             onChangeText={setNameInput}
             placeholder="이름 입력..."
-            placeholderTextColor={COLORS.textSecondary}
+            placeholderTextColor={COLORS.mutedForeground}
             onSubmitEditing={addPlayer}
             returnKeyType="done"
           />
-          <TouchableOpacity style={styles.addBtn} onPress={addPlayer} activeOpacity={0.85}>
-            <Text style={styles.addBtnText}>+ 추가</Text>
-          </TouchableOpacity>
+          <Button label="+ 추가" size="sm" onPress={addPlayer} />
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-
-  topBar: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 8,
-  },
-  backBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: 10, paddingHorizontal: 8,
-  },
-  backText: { fontSize: 14, fontWeight: '700', color: COLORS.woodDark },
-  resetBtn: {
-    paddingVertical: 8, paddingHorizontal: 14,
-    backgroundColor: '#F0B0A8',
-    borderRadius: RADIUS.sm,
-    borderWidth: 1.5, borderColor: COLORS.paintRed,
-  },
-  resetBtnText: { fontSize: 13, fontWeight: '800', color: COLORS.paintRed },
-
-  headerRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 24, paddingBottom: 16,
-  },
-  title: { fontSize: 26, fontWeight: '900', color: COLORS.textPrimary },
-
-  list: { flex: 1 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
-
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5, borderColor: COLORS.cardBorder,
-    paddingVertical: 12, paddingHorizontal: 10,
-    shadowColor: '#3D1A08',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  rankBadge: {
-    width: 30, height: 30,
-    borderRadius: 15, borderWidth: 2,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  rankText: { fontSize: 13, fontWeight: '900' },
-
-  nameInput: {
-    flex: 1,
-    fontSize: 14, fontWeight: '700', color: COLORS.textPrimary,
-    backgroundColor: COLORS.bg,
-    borderRadius: RADIUS.sm,
-    paddingHorizontal: 8, paddingVertical: 4,
-    borderWidth: 1.5, borderColor: COLORS.woodLight,
-  },
-
-  scoreCtrl: {
-    flexDirection: 'row', alignItems: 'center', gap: 2,
-  },
-  stepBtn: {
-    width: 30, height: 30,
-    backgroundColor: COLORS.wood,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  stepBtnText: { fontSize: 18, fontWeight: '900', color: COLORS.textOnWood },
-  scoreInput: {
-    width: 46, height: 30,
-    borderWidth: 2, borderColor: COLORS.woodLight,
-    borderRadius: RADIUS.sm,
-    fontSize: 16, fontWeight: '900', color: COLORS.textPrimary,
-    backgroundColor: COLORS.bg,
-  },
-
-  adjBtn: {
-    paddingHorizontal: 4, paddingVertical: 6,
-  },
-  adjBtnTextSm: { fontSize: 11, fontWeight: '800', color: COLORS.textSecondary },
-
-  removeBtn: {
-    width: 28, height: 28,
-    backgroundColor: '#F0B0A8',
-    borderRadius: 14,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: COLORS.paintRed,
-  },
-  removeBtnText: { fontSize: 16, fontWeight: '700', color: COLORS.paintRed },
-
-  addRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  addInput: {
-    flex: 1,
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1.5, borderColor: COLORS.cardBorder,
-    paddingHorizontal: 12, paddingVertical: 10,
-    fontSize: 14, color: COLORS.textPrimary, fontWeight: '600',
-  },
-  addBtnWrapper: {},
-  addBtn: {
-    backgroundColor: COLORS.wood,
-    borderRadius: RADIUS.sm,
-    paddingVertical: 10, paddingHorizontal: 16,
-    borderWidth: 1.5, borderColor: COLORS.woodDark,
-    shadowColor: '#3D1A08',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  addBtnBottom: {},
-  addBtnText: { fontSize: 13, fontWeight: '800', color: COLORS.textOnWood },
-});

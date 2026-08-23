@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Boddy shadcn 테마 — 플랫 미니멀 + 병아리 옐로우
+   흰 배경이 기본이고, 포인트로만 옐로우를 씀. 그림자 대신 얇은 회색 보더로
+   구획을 나누는 shadcn 특유의 절제된 톤을 그대로 따름.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 30 10% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 30 10% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 10% 12%;
+
+    --primary: 48 96% 53%;           /* 병아리 옐로우 */
+    --primary-foreground: 30 25% 12%;
+
+    --secondary: 40 30% 96%;
+    --secondary-foreground: 30 10% 12%;
+
+    --muted: 40 20% 95%;
+    --muted-foreground: 30 8% 45%;
+
+    --accent: 48 100% 94%;
+    --accent-foreground: 30 25% 15%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 65% 38%;
+    --success-foreground: 0 0% 100%;
+
+    --info: 217 80% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 30 15% 90%;
+    --input: 30 15% 88%;
+    --ring: 48 96% 53%;
+
+    --radius: 0.75rem;
+  }
+}

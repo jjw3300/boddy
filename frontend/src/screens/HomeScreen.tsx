@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RecommendStackParamList } from '../types/navigation';
-import { COLORS, FONT, SPACING, BLOCK_SHADOW_LG, RADIUS } from '../design';
+import { COLORS } from '../design';
 import { SearchIcon, BookIcon, MapPinIcon, WrenchIcon, DiceIcon } from '../components/Icon';
-import { WoodButton } from '../components/WoodButton';
+import { Button } from '../components/Button';
+import { Card } from '../components/Card';
 
 interface Props {
   navigation: NativeStackNavigationProp<RecommendStackParamList, 'Home'>;
@@ -14,75 +15,64 @@ export default function HomeScreen({ navigation }: Props) {
   const goTab = (tab: string) => navigation.getParent()?.navigate(tab as never);
 
   return (
-    <SafeAreaView style={s.container}>
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-background">
+      <ScrollView contentContainerClassName="px-5 pb-8" showsVerticalScrollIndicator={false}>
 
         {/* 로고 */}
-        <View style={s.logoArea}>
-          <View style={[s.logoWrapper, BLOCK_SHADOW_LG]}>
-            <View style={s.logoBlock}>
-              <DiceIcon size={52} color={COLORS.woodHighlight} fill={COLORS.woodHighlight} />
-            </View>
-            <View style={s.logoBlockShadow} />
+        <View className="mt-10 mb-8 items-center">
+          <View className="mb-3 h-16 w-16 items-center justify-center rounded-2xl bg-primary">
+            <DiceIcon size={32} color={COLORS.primaryForeground} fill="transparent" />
           </View>
-          <Text style={s.appName}>Boddy</Text>
-          <Text style={s.appSub}>보드게임 버디</Text>
+          <Text className="text-2xl font-bold tracking-tight text-foreground">Boddy</Text>
+          <Text className="mt-1 text-sm text-muted-foreground">보드게임 버디</Text>
         </View>
 
         {/* 메인 CTA */}
-        <WoodButton
+        <Button
           onPress={() => navigation.navigate('Recommendation')}
-          bg={COLORS.wood}
-          bottomColor={COLORS.woodDeep}
-          depth={8}
-          radius={RADIUS.lg}
-          style={s.mainBtnSurface}
+          className="mb-4 h-auto items-stretch justify-start rounded-2xl px-4 py-4"
         >
-          <View style={s.mainBtnInner}>
-            <View style={s.mainBtnIcon}>
-              <SearchIcon size={36} color={COLORS.woodDark} fill={COLORS.woodLight} />
+          <View className="flex-1 flex-row items-center gap-4">
+            <View className="h-12 w-12 items-center justify-center rounded-xl bg-black/10">
+              <SearchIcon size={24} color={COLORS.primaryForeground} fill="transparent" />
             </View>
-            <View style={s.mainBtnText}>
-              <Text style={s.mainBtnTitle}>오늘 게임 추천받기</Text>
-              <Text style={s.mainBtnSub}>인원수 · 시간 · 취향으로 찾아봐요</Text>
+            <View className="flex-1">
+              <Text className="mb-0.5 text-base font-bold text-primary-foreground">오늘 게임 추천받기</Text>
+              <Text className="text-xs font-medium text-[#3D3419]">인원수 · 시간 · 취향으로 찾아봐요</Text>
             </View>
           </View>
-        </WoodButton>
+        </Button>
 
         {/* 바로가기 */}
-        <View style={s.shortcutRow}>
+        <View className="mb-2 flex-row gap-3">
           <ShortcutCard
             label="플레이 기록"
             desc="내 게임 이력 보기"
             Icon={BookIcon}
-            bg={COLORS.woodLight}
-            shadowColor={COLORS.woodMid}
-            iconColor={COLORS.woodDark}
-            iconFill={COLORS.wood}
             onPress={() => goTab('LogTab')}
           />
           <ShortcutCard
             label="게임 도구"
             desc="주사위 · 점수판"
             Icon={WrenchIcon}
-            bg="#A8C8E8"
-            shadowColor="#2A5080"
-            iconColor="#1A4070"
-            iconFill="#6090C0"
             onPress={() => goTab('ToolkitTab')}
           />
         </View>
 
-        {/* 카페 출시 예정 */}
-        <View style={s.comingSoon}>
-          <MapPinIcon size={14} color={COLORS.textMuted} />
-          <Text style={s.comingSoonText}>보드게임 카페 찾기 — 준비 중이에요</Text>
-        </View>
+        {/* 카페 찾기 */}
+        <TouchableOpacity
+          className="mb-8 mt-2 flex-row items-center gap-2 rounded-lg bg-muted px-4 py-2.5"
+          onPress={() => goTab('CafeTab')}
+          activeOpacity={0.7}
+        >
+          <MapPinIcon size={14} color={COLORS.mutedForeground} />
+          <Text className="text-xs font-semibold text-muted-foreground">내 주변 보드게임 카페 찾기</Text>
+        </TouchableOpacity>
 
-        <View style={s.footer}>
-          <View style={s.divider} />
-          <Text style={s.footerText}>나무처럼 따뜻하게, 게임처럼 즐겁게</Text>
-          <View style={s.divider} />
+        <View className="flex-row items-center gap-3 py-4">
+          <View className="h-px flex-1 bg-border" />
+          <Text className="text-xs text-muted-foreground">오늘은 어떤 게임을 즐겨볼까요</Text>
+          <View className="h-px flex-1 bg-border" />
         </View>
 
       </ScrollView>
@@ -96,138 +86,19 @@ interface CardProps {
   label: string;
   desc: string;
   Icon: React.ComponentType<{ size?: number; color?: string; fill?: string }>;
-  bg: string;
-  shadowColor: string;
-  iconColor: string;
-  iconFill: string;
   onPress: () => void;
 }
 
-function ShortcutCard({ label, desc, Icon, bg, shadowColor, iconColor, iconFill, onPress }: CardProps) {
+function ShortcutCard({ label, desc, Icon, onPress }: CardProps) {
   return (
-    <TouchableOpacity
-      activeOpacity={0.82}
-      style={[s.cardOuter, { shadowColor }]}
-      onPress={onPress}
-    >
-      <View style={[s.cardBlock, { backgroundColor: bg }]}>
-        <Icon size={30} color={iconColor} fill={iconFill} />
-        <Text style={[s.cardLabel, { color: iconColor }]}>{label}</Text>
-        <Text style={[s.cardDesc, { color: iconColor, opacity: 0.7 }]}>{desc}</Text>
-      </View>
+    <TouchableOpacity className="flex-1" activeOpacity={0.7} onPress={onPress}>
+      <Card className="min-h-[112px] justify-end p-4">
+        <View className="mb-2 h-9 w-9 items-center justify-center rounded-lg bg-accent">
+          <Icon size={18} color={COLORS.foreground} fill="transparent" />
+        </View>
+        <Text className="mb-0.5 text-sm font-bold text-foreground">{label}</Text>
+        <Text className="text-[11px] font-medium text-muted-foreground">{desc}</Text>
+      </Card>
     </TouchableOpacity>
   );
 }
-
-// ─── 스타일 ──────────────────────────────────────────────────────────────────
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  scroll: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl },
-
-  logoArea: {
-    alignItems: 'center',
-    marginTop: SPACING.xxl,
-    marginBottom: SPACING.xl,
-  },
-  logoWrapper: { marginBottom: SPACING.md },
-  logoBlock: {
-    width: 104,
-    height: 104,
-    borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.wood,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.woodMid,
-    borderBottomWidth: 0,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-  },
-  logoBlockShadow: {
-    height: 10,
-    backgroundColor: COLORS.woodDeep,
-    borderBottomLeftRadius: RADIUS.xl,
-    borderBottomRightRadius: RADIUS.xl,
-    borderWidth: 2,
-    borderTopWidth: 0,
-    borderColor: COLORS.woodDeep,
-    marginHorizontal: 5,
-  },
-  appName: { ...FONT.display, color: COLORS.textPrimary, letterSpacing: 3 },
-  appSub: { ...FONT.caption, fontSize: 13, letterSpacing: 2, marginTop: SPACING.xs },
-
-  mainBtnSurface: {
-    paddingVertical: 0,
-    paddingHorizontal: 0,
-    borderWidth: 2,
-    borderColor: COLORS.woodMid,
-    marginBottom: SPACING.lg,
-  },
-  mainBtnInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    paddingVertical: SPACING.md + 4,
-    paddingHorizontal: SPACING.md + 4,
-  },
-  mainBtnIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.woodLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.woodMid,
-  },
-  mainBtnText: { flex: 1 },
-  mainBtnTitle: { ...FONT.h2, color: COLORS.textOnWood, marginBottom: SPACING.xs },
-  mainBtnSub: { fontSize: 13, color: 'rgba(255,250,240,0.8)', fontWeight: '600' },
-
-  shortcutRow: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    marginBottom: SPACING.sm,
-  },
-  cardOuter: {
-    flex: 1,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  cardBlock: {
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: 'rgba(0,0,0,0.07)',
-    gap: SPACING.xs,
-    minHeight: 110,
-    justifyContent: 'flex-end',
-  },
-  cardLabel: { fontSize: 14, fontWeight: '800' },
-  cardDesc: { fontSize: 11, fontWeight: '600' },
-
-  comingSoon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: 10,
-    paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.bgDeep,
-    borderRadius: RADIUS.sm,
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xl,
-  },
-  comingSoonText: { ...FONT.caption, color: COLORS.textMuted, fontSize: 12 },
-
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-  },
-  divider: { flex: 1, height: 1, backgroundColor: COLORS.woodLight },
-  footerText: { ...FONT.caption, color: COLORS.textSecondary, fontSize: 12 },
-});

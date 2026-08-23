@@ -34,3 +34,8 @@ frontend/.metro-cache/
 .idea/
 .vscode/
 *.swp
+
+# ========================
+# 개인 메모 (나만 보는 문서)
+# ========================
+RETRO_DESIGN.md

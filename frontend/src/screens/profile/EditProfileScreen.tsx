@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, SafeAreaView,
+  View, Text, SafeAreaView,
   TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../../types/navigation';
-import { COLORS, FONT, SPACING, RADIUS, BLOCK_SHADOW_SM } from '../../design';
+import { COLORS } from '../../design';
 import { ArrowLeftIcon, UserIcon } from '../../components/Icon';
-import { WoodButton } from '../../components/WoodButton';
+import { Button } from '../../components/Button';
+import { Input } from '../../components/Input';
 import { useAuth } from '../../context/AuthContext';
 
 interface Props {
@@ -39,135 +40,53 @@ export default function EditProfileScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={s.container}>
+    <SafeAreaView className="flex-1 bg-background">
       <KeyboardAvoidingView
-        style={s.flex}
+        className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* 헤더 */}
-        <View style={s.header}>
-          <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
-            <ArrowLeftIcon size={24} color={COLORS.woodDark} />
+        <View className="flex-row items-center justify-between border-b border-border px-4 py-4">
+          <TouchableOpacity className="p-2" onPress={() => navigation.goBack()}>
+            <ArrowLeftIcon size={24} color={COLORS.foreground} />
           </TouchableOpacity>
-          <Text style={s.headerTitle}>프로필 편집</Text>
-          <View style={{ width: 40 }} />
+          <Text className="text-lg font-bold text-foreground">프로필 편집</Text>
+          <View className="w-10" />
         </View>
 
-        <ScrollView contentContainerStyle={s.scroll}>
+        <ScrollView contentContainerClassName="px-5 pb-10 pt-8">
           {/* 아바타 */}
-          <View style={s.avatarArea}>
-            <View style={s.avatarWrapper}>
-              <View style={s.avatarBlock}>
-                <UserIcon size={52} color={COLORS.woodLight} fill={COLORS.woodLight} />
-              </View>
-              <View style={s.avatarShadow} />
+          <View className="mb-8 items-center">
+            <View className="mb-2 h-24 w-24 items-center justify-center rounded-full bg-primary">
+              <UserIcon size={48} color={COLORS.primaryForeground} fill="transparent" />
             </View>
-            <Text style={s.avatarHint}>프로필 이미지는 연동 계정에서 가져와요</Text>
+            <Text className="mt-1 text-xs text-muted-foreground">프로필 이미지는 연동 계정에서 가져와요</Text>
           </View>
 
           {/* 닉네임 입력 */}
-          <View style={s.fieldGroup}>
-            <Text style={s.fieldLabel}>닉네임</Text>
-            <View style={s.inputWrapper}>
-              <TextInput
-                style={s.input}
-                value={nickname}
-                onChangeText={setNickname}
-                placeholder="닉네임을 입력하세요"
-                placeholderTextColor={COLORS.textMuted}
-                maxLength={16}
-                autoFocus
-              />
-              <View style={s.inputShadow} />
-            </View>
-            <Text style={s.fieldHint}>{nickname.length}/16자</Text>
+          <View className="mb-8">
+            <Text className="mb-2 text-xs font-semibold tracking-wide text-foreground">닉네임</Text>
+            <Input
+              value={nickname}
+              onChangeText={setNickname}
+              placeholder="닉네임을 입력하세요"
+              maxLength={16}
+              autoFocus
+              className="h-auto py-3.5 text-base font-semibold"
+            />
+            <Text className="mt-1 text-right text-xs text-muted-foreground">{nickname.length}/16자</Text>
           </View>
 
           {/* 저장 버튼 */}
-          <WoodButton
+          <Button
             onPress={handleSave}
             disabled={saving}
             label={saving ? '저장 중...' : '저장하기'}
-            bg={COLORS.wood}
-            bottomColor={COLORS.woodDeep}
-            depth={6}
-            radius={RADIUS.md}
-            style={s.saveBtn}
-            labelStyle={s.saveBtnLabel}
+            className="h-auto rounded-xl py-4"
+            labelClassName="text-[17px] font-extrabold"
           />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  flex: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.woodLight,
-  },
-  backBtn: { padding: SPACING.xs },
-  headerTitle: { ...FONT.h3, color: COLORS.textPrimary },
-  scroll: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl },
-
-  // 아바타
-  avatarArea: { alignItems: 'center', marginBottom: SPACING.xl },
-  avatarWrapper: { ...BLOCK_SHADOW_SM, marginBottom: SPACING.sm },
-  avatarBlock: {
-    width: 96,
-    height: 96,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.wood,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.woodMid,
-    borderBottomWidth: 0,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-  },
-  avatarShadow: {
-    height: 8,
-    backgroundColor: COLORS.woodDeep,
-    borderBottomLeftRadius: RADIUS.full,
-    borderBottomRightRadius: RADIUS.full,
-  },
-  avatarHint: { ...FONT.caption, color: COLORS.textMuted, marginTop: SPACING.xs },
-
-  // 필드
-  fieldGroup: { marginBottom: SPACING.xl },
-  fieldLabel: { ...FONT.label, fontSize: 12, marginBottom: SPACING.sm, letterSpacing: 1 },
-  inputWrapper: { ...BLOCK_SHADOW_SM },
-  input: {
-    backgroundColor: COLORS.cardLight,
-    borderRadius: RADIUS.sm,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderWidth: 2,
-    borderColor: COLORS.cardBorder,
-    borderBottomWidth: 0,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 14,
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  inputShadow: {
-    height: 5,
-    backgroundColor: COLORS.woodLight,
-    borderBottomLeftRadius: RADIUS.sm,
-    borderBottomRightRadius: RADIUS.sm,
-  },
-  fieldHint: { ...FONT.caption, color: COLORS.textMuted, textAlign: 'right', marginTop: SPACING.xs },
-
-  // 저장 버튼
-  saveBtn: { paddingVertical: 0, paddingHorizontal: 0, borderWidth: 0 },
-  saveBtnLabel: { fontSize: 17, fontWeight: '800', paddingVertical: 16 },
-});

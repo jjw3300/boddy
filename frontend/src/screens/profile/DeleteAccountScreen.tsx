@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, Alert, TouchableOpacity,
+  View, Text, SafeAreaView, Alert, TouchableOpacity,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../../types/navigation';
-import { COLORS, FONT, SPACING, RADIUS } from '../../design';
+import { COLORS } from '../../design';
 import { ArrowLeftIcon, ShieldIcon } from '../../components/Icon';
-import { WoodButton, DangerWoodButton } from '../../components/WoodButton';
+import { Button } from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 
 interface Props {
   navigation: NativeStackNavigationProp<ProfileStackParamList, 'DeleteAccount'>;
 }
+
+const WARNINGS = [
+  '모든 플레이 기록이 영구 삭제됩니다',
+  '삭제된 데이터는 복구할 수 없어요',
+  '소셜 계정 연결도 해제됩니다',
+];
 
 export default function DeleteAccountScreen({ navigation }: Props) {
   const { deleteAccount } = useAuth();
@@ -36,83 +42,40 @@ export default function DeleteAccountScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={s.container}>
-      <View style={s.header}>
-        <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeftIcon size={24} color={COLORS.woodDark} />
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-row items-center justify-between border-b border-border px-4 py-4">
+        <TouchableOpacity className="p-2" onPress={() => navigation.goBack()}>
+          <ArrowLeftIcon size={24} color={COLORS.foreground} />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>회원 탈퇴</Text>
-        <View style={{ width: 40 }} />
+        <Text className="text-lg font-bold text-foreground">회원 탈퇴</Text>
+        <View className="w-10" />
       </View>
 
-      <View style={s.body}>
-        <View style={s.iconArea}>
-          <ShieldIcon size={56} color={COLORS.danger} fill={COLORS.dangerBg} />
+      <View className="flex-1 gap-4 px-5 pt-10">
+        <View className="mb-2 items-center">
+          <ShieldIcon size={56} color={COLORS.destructive} fill="#FEF2F2" />
         </View>
-        <Text style={s.title}>탈퇴 전에 확인해주세요</Text>
-        <View style={s.warningCard}>
+        <Text className="text-center text-xl font-bold text-foreground">탈퇴 전에 확인해주세요</Text>
+        <View className="gap-2 rounded-xl border border-border bg-red-50 p-4">
           {WARNINGS.map((w, i) => (
-            <Text key={i} style={s.warningItem}>• {w}</Text>
+            <Text key={i} className="text-sm leading-[22px] text-red-600">• {w}</Text>
           ))}
         </View>
 
-        <DangerWoodButton
+        <Button
           label={loading ? '처리 중...' : '회원 탈퇴하기'}
           onPress={handleDelete}
-          style={s.deleteBtn}
+          variant="destructive"
+          className="rounded-xl"
         />
-        <WoodButton
+        <Button
           label="돌아가기"
           onPress={() => navigation.goBack()}
-          bg={COLORS.bgDeep}
-          bottomColor={COLORS.woodMid}
-          depth={5}
-          radius={RADIUS.md}
-          style={s.cancelBtn}
-          labelStyle={s.cancelBtnLabel}
+          variant="secondary"
+          className="rounded-xl bg-muted"
+          labelClassName="text-muted-foreground"
         />
       </View>
     </SafeAreaView>
   );
 }
-
-const WARNINGS = [
-  '모든 플레이 기록이 영구 삭제됩니다',
-  '삭제된 데이터는 복구할 수 없어요',
-  '소셜 계정 연결도 해제됩니다',
-];
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.woodLight,
-  },
-  backBtn: { padding: SPACING.xs },
-  headerTitle: { ...FONT.h3, color: COLORS.textPrimary },
-  body: {
-    flex: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xxl,
-    gap: SPACING.md,
-  },
-  iconArea: { alignItems: 'center', marginBottom: SPACING.sm },
-  title: { ...FONT.h2, textAlign: 'center', color: COLORS.textPrimary },
-  warningCard: {
-    backgroundColor: COLORS.dangerBg,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.danger,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-  },
-  warningItem: { ...FONT.body, color: COLORS.danger, lineHeight: 22 },
-  deleteBtn: { paddingVertical: 0, paddingHorizontal: 0, borderWidth: 1.5 },
-  cancelBtn: { paddingVertical: 0, paddingHorizontal: 0, borderWidth: 0 },
-  cancelBtnLabel: { color: COLORS.textSecondary, fontSize: 15, paddingVertical: 14 },
-});

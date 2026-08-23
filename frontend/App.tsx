@@ -1,3 +1,5 @@
+import './global.css';
+import './src/lib/nativewind-setup';
 import React from 'react';
 import { StatusBar, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -12,8 +14,8 @@ function AppInner() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={COLORS.wood} />
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
@@ -28,7 +30,7 @@ function AppInner() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <AuthProvider>
         <AppInner />
       </AuthProvider>
