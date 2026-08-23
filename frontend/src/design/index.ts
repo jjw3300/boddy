@@ -9,7 +9,7 @@ export const COLORS = {
   background: '#FFFFFF',
   foreground: '#1C1917',
 
-  primary: '#FACC15',
+  primary: '#FFEE58',
   primaryForeground: '#1C1917',
 
   secondary: '#FAFAF9',

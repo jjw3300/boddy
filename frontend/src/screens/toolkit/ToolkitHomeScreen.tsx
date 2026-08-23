@@ -44,16 +44,16 @@ export default function ToolkitHomeScreen({ navigation }: Props) {
             key={tool.route}
             onPress={() => navigation.navigate(tool.route as any)}
             activeOpacity={0.6}
-            className="flex-row items-center gap-3.5 rounded-2xl border border-border bg-card px-4 py-3.5"
+            className="flex-row items-center gap-5 rounded-2xl border border-border bg-card px-6 py-5"
           >
-            <View className={`h-12 w-12 items-center justify-center rounded-full ${tool.accentBgClass}`}>
-              <tool.Icon size={22} color={tool.accentFg} fill="transparent" />
+            <View className={`h-[72px] w-[72px] items-center justify-center rounded-full ${tool.accentBgClass}`}>
+              <tool.Icon size={33} color={tool.accentFg} fill="transparent" />
             </View>
             <View className="flex-1">
-              <Text className="text-[15px] font-bold leading-5 text-foreground">{tool.label}</Text>
-              <Text className="mt-0.5 text-xs font-medium text-muted-foreground">{tool.desc}</Text>
+              <Text className="text-[22px] font-bold leading-7 text-foreground">{tool.label}</Text>
+              <Text className="mt-1 text-[18px] font-medium text-muted-foreground">{tool.desc}</Text>
             </View>
-            <ChevronRightIcon size={18} color={COLORS.mutedForeground} />
+            <ChevronRightIcon size={27} color={COLORS.mutedForeground} />
           </TouchableOpacity>
         ))}
       </ScrollView>

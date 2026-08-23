@@ -30,21 +30,21 @@ export default function HomeScreen({ navigation }: Props) {
         {/* 메인 CTA */}
         <Button
           onPress={() => navigation.navigate('Recommendation')}
-          className="mb-4 h-auto items-stretch justify-start rounded-2xl px-4 py-4"
+          className="mb-5 h-auto items-stretch justify-start rounded-2xl px-6 py-6"
         >
-          <View className="flex-1 flex-row items-center gap-4">
-            <View className="h-12 w-12 items-center justify-center rounded-xl bg-black/10">
-              <SearchIcon size={24} color={COLORS.primaryForeground} fill="transparent" />
+          <View className="flex-1 flex-row items-center gap-6">
+            <View className="h-[72px] w-[72px] items-center justify-center rounded-xl bg-black/10">
+              <SearchIcon size={36} color={COLORS.primaryForeground} fill="transparent" />
             </View>
             <View className="flex-1">
-              <Text className="mb-0.5 text-base font-bold text-primary-foreground">오늘 게임 추천받기</Text>
-              <Text className="text-xs font-medium text-[#3D3419]">인원수 · 시간 · 취향으로 찾아봐요</Text>
+              <Text className="mb-1 text-2xl font-bold text-primary-foreground">오늘 게임 추천받기</Text>
+              <Text className="text-[15px] font-medium text-[#3D3419]">인원수 · 시간 · 취향으로 찾아봐요</Text>
             </View>
           </View>
         </Button>
 
         {/* 바로가기 */}
-        <View className="mb-2 flex-row gap-3">
+        <View className="mb-3 flex-row gap-[18px]">
           <ShortcutCard
             label="플레이 기록"
             desc="내 게임 이력 보기"
@@ -61,12 +61,12 @@ export default function HomeScreen({ navigation }: Props) {
 
         {/* 카페 찾기 */}
         <TouchableOpacity
-          className="mb-8 mt-2 flex-row items-center gap-2 rounded-lg bg-muted px-4 py-2.5"
+          className="mb-8 mt-3 flex-row items-center gap-3 rounded-lg bg-muted px-6 py-4"
           onPress={() => goTab('CafeTab')}
           activeOpacity={0.7}
         >
-          <MapPinIcon size={14} color={COLORS.mutedForeground} />
-          <Text className="text-xs font-semibold text-muted-foreground">내 주변 보드게임 카페 찾기</Text>
+          <MapPinIcon size={21} color={COLORS.mutedForeground} />
+          <Text className="text-[18px] font-semibold text-muted-foreground">내 주변 보드게임 카페 찾기</Text>
         </TouchableOpacity>
 
         <View className="flex-row items-center gap-3 py-4">
@@ -92,12 +92,12 @@ interface CardProps {
 function ShortcutCard({ label, desc, Icon, onPress }: CardProps) {
   return (
     <TouchableOpacity className="flex-1" activeOpacity={0.7} onPress={onPress}>
-      <Card className="min-h-[112px] justify-end p-4">
-        <View className="mb-2 h-9 w-9 items-center justify-center rounded-lg bg-accent">
-          <Icon size={18} color={COLORS.foreground} fill="transparent" />
+      <Card className="min-h-[168px] justify-end p-6">
+        <View className="mb-3 h-[54px] w-[54px] items-center justify-center rounded-lg bg-accent">
+          <Icon size={27} color={COLORS.foreground} fill="transparent" />
         </View>
-        <Text className="mb-0.5 text-sm font-bold text-foreground">{label}</Text>
-        <Text className="text-[11px] font-medium text-muted-foreground">{desc}</Text>
+        <Text className="mb-1 text-[21px] font-bold text-foreground">{label}</Text>
+        <Text className="text-[17px] font-medium text-muted-foreground">{desc}</Text>
       </Card>
     </TouchableOpacity>
   );

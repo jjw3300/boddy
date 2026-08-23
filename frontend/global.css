@@ -19,7 +19,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 30 10% 12%;
 
-    --primary: 48 96% 53%;           /* 병아리 옐로우 */
+    --primary: 54 100% 67%;          /* 병아리 옐로우 */
     --primary-foreground: 30 25% 12%;
 
     --secondary: 40 30% 96%;
@@ -42,7 +42,7 @@
 
     --border: 30 15% 90%;
     --input: 30 15% 88%;
-    --ring: 48 96% 53%;
+    --ring: 54 100% 67%;
 
     --radius: 0.75rem;
   }

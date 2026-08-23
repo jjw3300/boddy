@@ -143,7 +143,7 @@ export default function RecommendationScreen({ navigation }: Props) {
       </View>
 
       {/* 선택지 */}
-      <ScrollView contentContainerClassName="gap-3 pb-8" showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerClassName="gap-4 pb-8" showsVerticalScrollIndicator={false}>
         {OPTIONS[currentStep].map(option => (
           <TouchableOpacity
             key={option.value}
@@ -151,10 +151,10 @@ export default function RecommendationScreen({ navigation }: Props) {
             activeOpacity={0.85}
           >
             <View className="flex-row items-stretch overflow-hidden rounded-xl border border-border bg-card">
-              <View className={cn('w-[5px]', ACCENT_BAR_CLASS[option.tagColor])} />
-              <View className="flex-1 px-[18px] py-[18px]">
-                <Text className="mb-1 text-lg font-extrabold text-foreground">{option.label}</Text>
-                <Text className="text-[13px] font-semibold text-muted-foreground">{option.desc}</Text>
+              <View className={cn('w-[8px]', ACCENT_BAR_CLASS[option.tagColor])} />
+              <View className="flex-1 px-[27px] py-[27px]">
+                <Text className="mb-1.5 text-[27px] font-extrabold text-foreground">{option.label}</Text>
+                <Text className="text-[20px] font-semibold text-muted-foreground">{option.desc}</Text>
               </View>
             </View>
           </TouchableOpacity>
