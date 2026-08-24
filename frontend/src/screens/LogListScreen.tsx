@@ -13,6 +13,7 @@ import { BookIcon, ChevronRightIcon, DiceIcon } from '../components/Icon';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Tag } from '../components/Tag';
+import { GradientView } from '../components/GradientView';
 
 const RESULT_LABELS: Record<ResultType, string> = {
   score: '점수',
@@ -32,9 +33,9 @@ function LogCard({ log, onPress }: { log: PlayLog; onPress: () => void }) {
         {log.game_thumbnail ? (
           <Image source={{ uri: log.game_thumbnail }} className="h-24 w-[76px]" />
         ) : (
-          <View className="h-24 w-[76px] items-center justify-center bg-muted">
-            <DiceIcon size={28} color={COLORS.mutedForeground} />
-          </View>
+          <GradientView gradient="primary" className="h-24 w-[76px] items-center justify-center">
+            <DiceIcon size={28} color="#FFFFFF" />
+          </GradientView>
         )}
         <View className="flex-1 gap-1 px-3 py-3">
           <Text className="text-[15px] font-bold text-foreground" numberOfLines={1}>{log.game_name}</Text>
@@ -73,13 +74,14 @@ export default function LogListScreen({ navigation }: Props) {
       {logs.length === 0 ? (
         /* 빈 상태 */
         <View className="flex-1 items-center justify-center px-8">
-          <View className="mb-5 h-[92px] w-[92px] items-center justify-center rounded-2xl border border-border bg-accent">
-            <BookIcon size={44} color={COLORS.primary} fill="transparent" />
-          </View>
+          <GradientView gradient="primary" className="mb-5 h-[92px] w-[92px] items-center justify-center rounded-2xl">
+            <BookIcon size={44} color="#FFFFFF" fill="transparent" />
+          </GradientView>
           <Text className="mb-1.5 text-center text-lg font-bold text-foreground">아직 기록이 없어요</Text>
           <Text className="mb-5 text-center text-[13px] text-muted-foreground">첫 번째 게임 기록을 남겨보세요!</Text>
           <Button
             label="+ 기록 시작하기"
+            variant="gradient"
             onPress={() => navigation.navigate('NewLog')}
             className="px-6"
             labelClassName="text-[15px]"

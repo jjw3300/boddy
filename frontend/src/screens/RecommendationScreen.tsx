@@ -7,6 +7,7 @@ import { fetchRecommendations } from '../api/recommendation';
 import { COLORS } from '../design';
 import { ArrowLeftIcon } from '../components/Icon';
 import { TagColor } from '../components/Tag';
+import { GradientView } from '../components/GradientView';
 import { cn } from '../lib/utils';
 
 type Step = 'player_count' | 'play_style' | 'game_type' | 'difficulty' | 'play_time';
@@ -119,10 +120,11 @@ export default function RecommendationScreen({ navigation }: Props) {
       {/* 상단 진행바 */}
       <View className="mb-1 mt-4 flex-row gap-1.5 self-center">
         {STEPS.map((_, i) => (
-          <View
-            key={i}
-            className={cn('h-1.5 w-6 rounded-full bg-border', i <= stepIndex && 'bg-primary')}
-          />
+          i <= stepIndex ? (
+            <GradientView key={i} gradient="primary" direction="horizontal" className="h-1.5 w-6 rounded-full" />
+          ) : (
+            <View key={i} className="h-1.5 w-6 rounded-full bg-border" />
+          )
         ))}
       </View>
 

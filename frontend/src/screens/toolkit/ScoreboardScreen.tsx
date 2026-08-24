@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  SafeAreaView, ScrollView, Alert,
+  SafeAreaView, ScrollView, Alert, StyleSheet,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
 import { ArrowLeftIcon, TrophyIcon } from '../../components/Icon';
 import { Button } from '../../components/Button';
+import { GradientView } from '../../components/GradientView';
 
 interface Props {
   navigation: NativeStackNavigationProp<ToolkitStackParamList, 'Scoreboard'>;
@@ -135,10 +136,11 @@ export default function ScoreboardScreen({ navigation }: Props) {
               {/* - + score + + */}
               <View className="flex-row items-center gap-0.5">
                 <TouchableOpacity
-                  className="h-[30px] w-[30px] items-center justify-center rounded-md bg-primary"
+                  className="h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-md"
                   onPress={() => adjustScore(player.id, -1)}
                 >
-                  <Text className="text-lg font-extrabold text-primary-foreground">－</Text>
+                  <GradientView gradient="primary" style={StyleSheet.absoluteFill} />
+                  <Text className="text-lg font-extrabold text-white">－</Text>
                 </TouchableOpacity>
 
                 <TextInput
@@ -151,10 +153,11 @@ export default function ScoreboardScreen({ navigation }: Props) {
                 />
 
                 <TouchableOpacity
-                  className="h-[30px] w-[30px] items-center justify-center rounded-md bg-primary"
+                  className="h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-md"
                   onPress={() => adjustScore(player.id, 1)}
                 >
-                  <Text className="text-lg font-extrabold text-primary-foreground">＋</Text>
+                  <GradientView gradient="primary" style={StyleSheet.absoluteFill} />
+                  <Text className="text-lg font-extrabold text-white">＋</Text>
                 </TouchableOpacity>
               </View>
 

@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, Animated, StyleSheet } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
 import { ArrowLeftIcon } from '../../components/Icon';
+import { GradientView } from '../../components/GradientView';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -119,9 +120,10 @@ export default function CoinScreen({ navigation }: Props) {
           onPress={flip}
           disabled={flipping}
           activeOpacity={0.85}
-          className={cn('items-center rounded-xl py-[18px]', flipping ? 'bg-muted' : 'bg-primary')}
+          className={cn('items-center overflow-hidden rounded-xl py-[18px]', flipping && 'bg-muted')}
         >
-          <Text className={cn('text-lg font-bold', flipping ? 'text-muted-foreground' : 'text-primary-foreground')}>
+          {!flipping && <GradientView gradient="primary" style={StyleSheet.absoluteFill} />}
+          <Text className={cn('text-lg font-bold', flipping ? 'text-muted-foreground' : 'text-white')}>
             {flipping ? '던지는 중...' : '🪙  던지기'}
           </Text>
         </TouchableOpacity>

@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, SafeAreaView, Animated, ScrollView,
+  View, Text, TouchableOpacity, SafeAreaView, Animated, ScrollView, StyleSheet,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
 import { ArrowLeftIcon } from '../../components/Icon';
+import { GradientView } from '../../components/GradientView';
+import { GradientName } from '../../design/gradients';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -19,14 +21,17 @@ const MAX_DICE = 6;
 const DIE_TYPES = [4, 6, 8, 10, 12, 20, 100] as const;
 type DieSides = typeof DIE_TYPES[number];
 
-const DIE_COLOR: Partial<Record<DieSides, { fg: string; bgClass: string }>> = {
-  4:   { fg: '#7C3AED', bgClass: 'bg-violet-50' },
-  8:   { fg: '#16A34A', bgClass: 'bg-green-50' },
-  10:  { fg: '#D97706', bgClass: 'bg-amber-50' },
-  12:  { fg: '#DC2626', bgClass: 'bg-red-50' },
-  20:  { fg: '#0D9488', bgClass: 'bg-teal-50' },
-  100: { fg: '#2563EB', bgClass: 'bg-blue-50' },
+const DIE_COLOR: Partial<Record<DieSides, { fg: string }>> = {
+  4:   { fg: '#7C3AED' },
+  8:   { fg: '#16A34A' },
+  10:  { fg: '#D97706' },
+  12:  { fg: '#DC2626' },
+  20:  { fg: '#0D9488' },
+  100: { fg: '#2563EB' },
 };
+
+// 선택된 다이스 종류 칩의 그라데이션 — 종류별로 순환 배정
+const CHIP_GRADIENT_CYCLE: GradientName[] = ['primary', 'warm', 'deep'];
 
 // 주사위 눈(pip) 위치 — d6 전용 클래식 표기
 const PIP_POSITIONS = [
@@ -62,14 +67,14 @@ function DieFace({ sides, value, size = 90 }: { sides: DieSides; value: number; 
     const activePips = PIP_CONFIG[value] ?? [];
     return (
       <View
-        className="rounded-xl border border-border bg-card"
+        className="rounded-2xl border-2 border-[#FDE68A] bg-card"
         style={[{ width: size, height: size }, DIE_SHADOW]}
       >
         {PIP_POSITIONS.map((pos, idx) =>
           activePips.includes(idx) ? (
             <View
               key={idx}
-              className="absolute h-3 w-3 rounded-full bg-foreground"
+              className="absolute h-3 w-3 rounded-full bg-[#78350F]"
               style={pos as any}
             />
           ) : null,
@@ -78,13 +83,13 @@ function DieFace({ sides, value, size = 90 }: { sides: DieSides; value: number; 
     );
   }
 
-  // d6을 제외한 다면체는 도형 없이 숫자만 — 색상으로만 종류를 구분
+  // d6을 제외한 다면체는 도형 없이 숫자만 — 색상으로만 종류를 구분, 굴릴 때 숫자 자체가 깜빡인다
   const color = DIE_COLOR[sides]!;
 
   return (
     <View
-      className="items-center justify-center rounded-2xl border border-border bg-card"
-      style={[{ width: size, height: size }, DIE_SHADOW]}
+      className="items-center justify-center rounded-2xl border-2 bg-card"
+      style={[{ width: size, height: size, borderColor: `${color.fg}55` }, DIE_SHADOW]}
     >
       <Text
         className="font-bold"
@@ -102,12 +107,21 @@ export default function DiceScreen({ navigation }: Props) {
   const [values, setValues] = useState<number[]>([1, 1]);
   const [rolling, setRolling] = useState(false);
 
-  const shakeAnims = useRef(
+  // 굴리는 동안 -12deg~12deg로 빠르게 흔들리고(wobble) 살짝 커졌다 작아진다
+  const rotateAnims = useRef(
     Array.from({ length: MAX_DICE }, () => new Animated.Value(0)),
   ).current;
   const scaleAnims = useRef(
     Array.from({ length: MAX_DICE }, () => new Animated.Value(1)),
   ).current;
+  const rotateInterpolated = rotateAnims.map(v =>
+    v.interpolate({ inputRange: [-12, 12], outputRange: ['-12deg', '12deg'] }),
+  );
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  }, []);
 
   function changeDiceCount(n: number) {
     const next = Math.min(MAX_DICE, Math.max(1, n));
@@ -129,34 +143,47 @@ export default function DiceScreen({ navigation }: Props) {
     if (rolling) return;
     setRolling(true);
 
-    const newValues = Array.from({ length: diceCount }, () =>
-      Math.floor(Math.random() * sides) + 1,
-    );
-
-    const animations = Array.from({ length: diceCount }, (_, i) =>
-      Animated.sequence([
-        Animated.parallel([
-          Animated.sequence([
-            Animated.timing(shakeAnims[i], { toValue: 10, duration: 60, useNativeDriver: true }),
-            Animated.timing(shakeAnims[i], { toValue: -10, duration: 60, useNativeDriver: true }),
-            Animated.timing(shakeAnims[i], { toValue: 8, duration: 55, useNativeDriver: true }),
-            Animated.timing(shakeAnims[i], { toValue: -8, duration: 55, useNativeDriver: true }),
-            Animated.timing(shakeAnims[i], { toValue: 5, duration: 50, useNativeDriver: true }),
-            Animated.timing(shakeAnims[i], { toValue: -5, duration: 50, useNativeDriver: true }),
-            Animated.timing(shakeAnims[i], { toValue: 0, duration: 40, useNativeDriver: true }),
+    // 흔들리는 동안(wobble) 숫자/눈이 빠르게 바뀌다가(flicker) 최종값에 멈춘다
+    const loops = Array.from({ length: diceCount }, (_, i) => {
+      rotateAnims[i].setValue(-12);
+      scaleAnims[i].setValue(1);
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(rotateAnims[i], { toValue: 12, duration: 60, useNativeDriver: true }),
+            Animated.timing(scaleAnims[i], { toValue: 1.07, duration: 60, useNativeDriver: true }),
           ]),
-          Animated.sequence([
-            Animated.timing(scaleAnims[i], { toValue: 1.15, duration: 180, useNativeDriver: true }),
-            Animated.timing(scaleAnims[i], { toValue: 1, duration: 180, useNativeDriver: true }),
+          Animated.parallel([
+            Animated.timing(rotateAnims[i], { toValue: -12, duration: 60, useNativeDriver: true }),
+            Animated.timing(scaleAnims[i], { toValue: 1, duration: 60, useNativeDriver: true }),
           ]),
         ]),
-      ]),
-    );
-
-    Animated.parallel(animations).start(() => {
-      setValues(newValues);
-      setRolling(false);
+      );
+      loop.start();
+      return loop;
     });
+
+    let ticks = 0;
+    const TOTAL_TICKS = 16;
+    intervalRef.current = setInterval(() => {
+      setValues(prev => {
+        const next = [...prev];
+        for (let i = 0; i < diceCount; i++) next[i] = Math.floor(Math.random() * sides) + 1;
+        return next;
+      });
+
+      if (++ticks >= TOTAL_TICKS) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        loops.forEach(loop => loop.stop());
+        const settle = Array.from({ length: diceCount }, (_, i) =>
+          Animated.parallel([
+            Animated.timing(rotateAnims[i], { toValue: 0, duration: 150, useNativeDriver: true }),
+            Animated.timing(scaleAnims[i], { toValue: 1, duration: 150, useNativeDriver: true }),
+          ]),
+        );
+        Animated.parallel(settle).start(() => setRolling(false));
+      }
+    }, 60);
   }
 
   const total = values.slice(0, diceCount).reduce((s, v) => s + v, 0);
@@ -180,26 +207,20 @@ export default function DiceScreen({ navigation }: Props) {
         contentContainerClassName="gap-2 px-6"
         className="mb-5 grow-0"
       >
-        {DIE_TYPES.map(s => {
+        {DIE_TYPES.map((s, idx) => {
           const selected = s === sides;
-          const color = DIE_COLOR[s];
+          const chipGradient = CHIP_GRADIENT_CYCLE[idx % CHIP_GRADIENT_CYCLE.length];
           return (
             <TouchableOpacity key={s} onPress={() => changeSides(s)} activeOpacity={0.7}>
-              <View
-                className={cn(
-                  'min-w-[56px] items-center rounded-lg border px-3.5 py-2.5',
-                  selected ? (color ? color.bgClass : 'bg-accent') : 'border-border bg-background',
-                  selected && (color ? 'border-transparent' : 'border-transparent'),
-                  !selected && 'border-border',
-                )}
-              >
-                <Text
-                  className="text-[13px] font-bold"
-                  style={{ color: selected ? (color?.fg ?? COLORS.accentForeground) : COLORS.mutedForeground }}
-                >
-                  D{s}
-                </Text>
-              </View>
+              {selected ? (
+                <GradientView gradient={chipGradient} className="min-w-[56px] items-center rounded-lg px-3.5 py-2.5">
+                  <Text className="text-[13px] font-bold text-white">D{s}</Text>
+                </GradientView>
+              ) : (
+                <View className="min-w-[56px] items-center rounded-lg border border-border bg-background px-3.5 py-2.5">
+                  <Text className="text-[13px] font-bold" style={{ color: COLORS.mutedForeground }}>D{s}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
@@ -246,7 +267,7 @@ export default function DiceScreen({ navigation }: Props) {
               key={i}
               style={{
                 transform: [
-                  { translateX: shakeAnims[i] },
+                  { rotate: rotateInterpolated[i] },
                   { scale: scaleAnims[i] },
                 ],
               }}
@@ -271,11 +292,12 @@ export default function DiceScreen({ navigation }: Props) {
           disabled={rolling}
           activeOpacity={0.85}
           className={cn(
-            'items-center rounded-xl py-[18px]',
-            rolling ? 'bg-muted' : 'bg-primary',
+            'items-center overflow-hidden rounded-xl py-[18px]',
+            rolling && 'bg-muted',
           )}
         >
-          <Text className={cn('text-lg font-bold', rolling ? 'text-muted-foreground' : 'text-primary-foreground')}>
+          {!rolling && <GradientView gradient="primary" style={StyleSheet.absoluteFill} />}
+          <Text className={cn('text-lg font-bold', rolling ? 'text-muted-foreground' : 'text-white')}>
             {rolling ? '굴리는 중...' : `🎲  D${sides} 굴리기`}
           </Text>
         </TouchableOpacity>

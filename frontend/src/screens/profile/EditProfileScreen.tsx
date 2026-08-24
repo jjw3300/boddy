@@ -9,6 +9,7 @@ import { COLORS } from '../../design';
 import { ArrowLeftIcon, UserIcon } from '../../components/Icon';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { GradientView } from '../../components/GradientView';
 import { useAuth } from '../../context/AuthContext';
 
 interface Props {
@@ -57,9 +58,9 @@ export default function EditProfileScreen({ navigation }: Props) {
         <ScrollView contentContainerClassName="px-5 pb-10 pt-8">
           {/* 아바타 */}
           <View className="mb-8 items-center">
-            <View className="mb-2 h-24 w-24 items-center justify-center rounded-full bg-primary">
-              <UserIcon size={48} color={COLORS.primaryForeground} fill="transparent" />
-            </View>
+            <GradientView gradient="primary" className="mb-2 h-24 w-24 items-center justify-center rounded-full">
+              <UserIcon size={48} color="#FFFFFF" fill="transparent" />
+            </GradientView>
             <Text className="mt-1 text-xs text-muted-foreground">프로필 이미지는 연동 계정에서 가져와요</Text>
           </View>
 
@@ -82,6 +83,7 @@ export default function EditProfileScreen({ navigation }: Props) {
             onPress={handleSave}
             disabled={saving}
             label={saving ? '저장 중...' : '저장하기'}
+            variant="gradient"
             className="h-auto rounded-xl py-4"
             labelClassName="text-[17px] font-extrabold"
           />

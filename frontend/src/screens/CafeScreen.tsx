@@ -11,6 +11,7 @@ import { COLORS } from '../design';
 import { MapPinIcon, RefreshIcon, ChevronRightIcon } from '../components/Icon';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { GradientView } from '../components/GradientView';
 
 type Status = 'loading' | 'denied' | 'error' | 'ready';
 
@@ -24,18 +25,18 @@ function CafeCard({ cafe }: { cafe: CafeSummary }) {
   return (
     <TouchableOpacity onPress={() => Linking.openURL(cafe.place_url)} activeOpacity={0.85}>
       <Card className="flex-row items-center gap-3 p-4">
-        <View className="h-11 w-11 items-center justify-center rounded-lg border border-border bg-red-50">
-          <MapPinIcon size={22} color="#DC2626" fill="transparent" />
-        </View>
+        <GradientView gradient="warm" className="h-11 w-11 items-center justify-center rounded-lg">
+          <MapPinIcon size={22} color="#FFFFFF" fill="transparent" />
+        </GradientView>
         <View className="flex-1 gap-1">
           <Text className="text-[15px] font-bold text-foreground" numberOfLines={1}>{cafe.name}</Text>
           <Text className="text-[13px] text-muted-foreground" numberOfLines={1}>
             {cafe.road_address ?? cafe.address}
           </Text>
           {cafe.distance_m !== null && (
-            <View className="mt-0.5 self-start rounded-md border border-border bg-accent px-2 py-0.5">
+            <GradientView gradient="soft" className="mt-0.5 self-start rounded-md px-2 py-0.5">
               <Text className="text-[11px] font-extrabold text-foreground">{formatDistance(cafe.distance_m)}</Text>
-            </View>
+            </GradientView>
           )}
         </View>
         <ChevronRightIcon size={18} color={COLORS.mutedForeground} />
@@ -90,31 +91,31 @@ export default function CafeScreen() {
 
       {status === 'denied' && (
         <View className="flex-1 items-center justify-center gap-1 px-10">
-          <View className="mb-5 h-[92px] w-[92px] items-center justify-center rounded-2xl border border-border bg-muted">
-            <MapPinIcon size={40} color="#DC2626" fill="transparent" />
-          </View>
+          <GradientView gradient="warm" className="mb-5 h-[92px] w-[92px] items-center justify-center rounded-2xl">
+            <MapPinIcon size={40} color="#FFFFFF" fill="transparent" />
+          </GradientView>
           <Text className="mb-1.5 text-center text-lg font-bold text-foreground">위치 권한이 필요해요</Text>
           <Text className="mb-5 text-center text-sm font-semibold text-muted-foreground">설정에서 위치 권한을 허용해주세요</Text>
-          <Button label="설정 열기" size="sm" onPress={() => Linking.openSettings()} className="px-5" />
+          <Button label="설정 열기" variant="gradient" size="sm" onPress={() => Linking.openSettings()} className="px-5" />
         </View>
       )}
 
       {status === 'error' && (
         <View className="flex-1 items-center justify-center gap-1 px-10">
-          <View className="mb-5 h-[92px] w-[92px] items-center justify-center rounded-2xl border border-border bg-muted">
+          <GradientView gradient="deep" className="mb-5 h-[92px] w-[92px] items-center justify-center rounded-2xl">
             <Text className="text-[42px]">😢</Text>
-          </View>
+          </GradientView>
           <Text className="mb-1.5 text-center text-lg font-bold text-foreground">카페를 불러오지 못했어요</Text>
           <Text className="mb-5 text-center text-sm font-semibold text-muted-foreground">{errorMsg}</Text>
-          <Button label="다시 시도" size="sm" onPress={load} className="px-5" />
+          <Button label="다시 시도" variant="gradient" size="sm" onPress={load} className="px-5" />
         </View>
       )}
 
       {status === 'ready' && cafes.length === 0 && (
         <View className="flex-1 items-center justify-center gap-1 px-10">
-          <View className="mb-5 h-[92px] w-[92px] items-center justify-center rounded-2xl border border-border bg-muted">
-            <MapPinIcon size={40} color={COLORS.mutedForeground} fill="transparent" />
-          </View>
+          <GradientView gradient="soft" className="mb-5 h-[92px] w-[92px] items-center justify-center rounded-2xl">
+            <MapPinIcon size={40} color="#FF9F1C" fill="transparent" />
+          </GradientView>
           <Text className="mb-1.5 text-center text-lg font-bold text-foreground">주변에 카페가 없어요</Text>
           <Text className="text-center text-sm font-semibold text-muted-foreground">반경을 넓혀서 다시 찾아볼게요</Text>
         </View>

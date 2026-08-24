@@ -1,13 +1,15 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  SafeAreaView, ScrollView, Animated,
+  SafeAreaView, ScrollView, Animated, StyleSheet,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
 import { ArrowLeftIcon, FingerIcon } from '../../components/Icon';
 import { Button } from '../../components/Button';
+import { GradientView } from '../../components/GradientView';
+import { GradientName } from '../../design/gradients';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -17,13 +19,8 @@ interface Props {
 // 룰렛 슬롯 딜레이 시퀀스 (ms) — 빠르게 시작해 점점 느려짐
 const ROULETTE_DELAYS = [70, 70, 80, 90, 110, 130, 160, 200, 250, 310, 380, 460, 540];
 
-const WINNER_COLORS = [
-  { bgHex: '#FFFBEB', fg: '#D97706' },
-  { bgHex: '#F0FDF4', fg: '#16A34A' },
-  { bgHex: '#FEF2F2', fg: '#DC2626' },
-  { bgHex: '#EFF6FF', fg: '#2563EB' },
-  { bgHex: '#F5F3FF', fg: '#7C3AED' },
-];
+// 하이라이트된 플레이어 카드 배경 — 순서대로 순환 배정
+const HIGHLIGHT_GRADIENTS: GradientName[] = ['primary', 'warm', 'deep'];
 
 let _pid = 0;
 function pid() { return String(++_pid); }
@@ -118,28 +115,33 @@ export default function FirstPlayerScreen({ navigation }: Props) {
           {players.map((p, idx) => {
             const isHighlighted = highlighted === idx;
             const isWinner = winner !== null && isHighlighted;
-            const colorSet = WINNER_COLORS[idx % WINNER_COLORS.length];
+            const highlightGradient = HIGHLIGHT_GRADIENTS[idx % HIGHLIGHT_GRADIENTS.length];
 
             const cardContent = (
               <View
-                className="flex-row items-center rounded-xl border border-border px-5 py-4"
-                style={{ backgroundColor: isHighlighted ? colorSet.bgHex : COLORS.background }}
+                className="relative overflow-hidden rounded-xl border border-border px-5 py-4"
+                style={{ backgroundColor: isHighlighted ? undefined : COLORS.background }}
               >
-                <Text
-                  className="flex-1 text-lg font-extrabold"
-                  style={{ color: isHighlighted ? colorSet.fg : COLORS.foreground }}
-                >
-                  {isWinner ? '🎉  ' : ''}{p.name}
-                  {isWinner ? '  🎉' : ''}
-                </Text>
-                {players.length > 2 && !animating && (
-                  <TouchableOpacity
-                    className="h-7 w-7 items-center justify-center rounded-full bg-red-50"
-                    onPress={() => removePlayer(p.id)}
-                  >
-                    <Text className="text-base font-bold text-red-600">×</Text>
-                  </TouchableOpacity>
+                {isHighlighted && (
+                  <GradientView gradient={highlightGradient} style={StyleSheet.absoluteFill} />
                 )}
+                <View className="flex-row items-center">
+                  <Text
+                    className="flex-1 text-lg font-extrabold"
+                    style={{ color: isHighlighted ? '#FFFFFF' : COLORS.foreground }}
+                  >
+                    {isWinner ? '🎉  ' : ''}{p.name}
+                    {isWinner ? '  🎉' : ''}
+                  </Text>
+                  {players.length > 2 && !animating && (
+                    <TouchableOpacity
+                      className="h-7 w-7 items-center justify-center rounded-full bg-red-50"
+                      onPress={() => removePlayer(p.id)}
+                    >
+                      <Text className="text-base font-bold text-red-600">×</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             );
 
@@ -191,9 +193,10 @@ export default function FirstPlayerScreen({ navigation }: Props) {
           onPress={pickFirst}
           disabled={!canPick}
           activeOpacity={0.85}
-          className={cn('items-center rounded-xl py-[18px]', canPick ? 'bg-primary' : 'bg-muted')}
+          className={cn('items-center overflow-hidden rounded-xl py-[18px]', !canPick && 'bg-muted')}
         >
-          <Text className={cn('text-lg font-bold', canPick ? 'text-primary-foreground' : 'text-muted-foreground')}>
+          {canPick && <GradientView gradient="primary" style={StyleSheet.absoluteFill} />}
+          <Text className={cn('text-lg font-bold', canPick ? 'text-white' : 'text-muted-foreground')}>
             {animating ? '정하는 중...' : '👆  선 정하기!'}
           </Text>
         </TouchableOpacity>

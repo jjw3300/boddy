@@ -13,6 +13,7 @@ import { ArrowLeftIcon } from '../components/Icon';
 import { Tag, TagColor } from '../components/Tag';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { GradientView } from '../components/GradientView';
 
 const GAME_TYPE_STYLE: Record<GameType, { label: string; color: TagColor }> = {
   luck:      { label: '운빨',   color: 'warning' },
@@ -75,7 +76,7 @@ export default function GameDetailScreen({ navigation, route }: Props) {
         <View className="flex-1 items-center justify-center gap-3">
           <Text className="text-5xl">😢</Text>
           <Text className="text-center text-base font-bold text-foreground">{error}</Text>
-          <Button label="돌아가기" size="sm" onPress={() => navigation.goBack()} className="mt-2" />
+          <Button label="돌아가기" variant="gradient" size="sm" onPress={() => navigation.goBack()} className="mt-2" />
         </View>
       )}
 
@@ -86,9 +87,9 @@ export default function GameDetailScreen({ navigation, route }: Props) {
             {game.thumbnail ? (
               <Image source={{ uri: game.thumbnail }} className="h-[180px] w-[180px]" resizeMode="cover" />
             ) : (
-              <View className="h-[180px] w-[180px] items-center justify-center bg-muted">
+              <GradientView gradient="soft" className="h-[180px] w-[180px] items-center justify-center">
                 <Text className="text-6xl">🎲</Text>
-              </View>
+              </GradientView>
             )}
           </View>
 
@@ -112,7 +113,7 @@ export default function GameDetailScreen({ navigation, route }: Props) {
           {/* 설명 */}
           <View className="mb-4 w-full">
             <View className="mb-2.5 flex-row items-center gap-2">
-              <View className="h-5 w-[5px] rounded-sm bg-primary" />
+              <GradientView gradient="primary" className="h-5 w-[5px] rounded-sm" />
               <Text className="text-[17px] font-extrabold text-foreground">게임 소개</Text>
             </View>
             <Card className="p-4">

@@ -10,6 +10,8 @@ import {
   UserIcon, BellIcon, InfoIcon, LogoutIcon, EditIcon,
   ChevronRightIcon, ShieldIcon,
 } from '../../components/Icon';
+import { GradientView } from '../../components/GradientView';
+import { Button } from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 
@@ -45,16 +47,16 @@ export default function ProfileScreen({ navigation }: Props) {
 
         {/* 프로필 카드 */}
         <View className="mb-5 flex-row items-center gap-4 rounded-xl border border-border bg-card p-4">
-          {/* 아바타 */}
-          <View>
-            {user?.profileImage ? (
-              <Image source={{ uri: user.profileImage }} className="h-[60px] w-[60px] rounded-full" />
-            ) : (
-              <View className="h-[60px] w-[60px] items-center justify-center rounded-full border border-border bg-primary">
-                <UserIcon size={36} color={COLORS.primaryForeground} fill="transparent" />
-              </View>
-            )}
-          </View>
+          {/* 아바타 — 그라데이션 링 + 화이트 인셋 */}
+          <GradientView gradient="primary" direction="diagonal" className="h-[68px] w-[68px] items-center justify-center rounded-full">
+            <View className="h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full bg-white">
+              {user?.profileImage ? (
+                <Image source={{ uri: user.profileImage }} className="h-[60px] w-[60px] rounded-full" />
+              ) : (
+                <UserIcon size={32} color="#FF9F1C" fill="transparent" />
+              )}
+            </View>
+          </GradientView>
 
           {/* 사용자 정보 */}
           <View className="flex-1 gap-1">
@@ -64,13 +66,13 @@ export default function ProfileScreen({ navigation }: Props) {
             ) : isGuest ? (
               <Text className="text-xs italic text-muted-foreground">로그인하면 더 많은 기능을 쓸 수 있어요</Text>
             ) : null}
-            <View className="mt-0.5 self-start rounded-full bg-muted px-2 py-[3px]">
+            <GradientView gradient="soft" direction="horizontal" className="mt-0.5 self-start rounded-full px-2 py-[3px]">
               <Text className="text-[11px] font-semibold text-foreground">
                 {user?.provider === 'kakao' ? '🟡 카카오 계정'
                   : user?.provider === 'google' ? '🔵 Google 계정'
                   : '👤 게스트'}
               </Text>
-            </View>
+            </GradientView>
           </View>
 
           {/* 프로필 수정 버튼 */}
@@ -87,12 +89,12 @@ export default function ProfileScreen({ navigation }: Props) {
 
         {/* 게스트일 때 로그인 유도 */}
         {isGuest && (
-          <TouchableOpacity activeOpacity={0.85}
-            onPress={() => navigation.navigate('Login' as any)}>
-            <View className="mb-5 items-center rounded-xl bg-primary py-3.5">
-              <Text className="text-[15px] font-bold text-primary-foreground">로그인 / 회원가입 →</Text>
-            </View>
-          </TouchableOpacity>
+          <Button
+            variant="gradient"
+            label="로그인 / 회원가입 →"
+            onPress={() => navigation.navigate('Login' as any)}
+            className="mb-5 h-auto rounded-xl py-3.5"
+          />
         )}
 
         {/* 섹션: 설정 */}

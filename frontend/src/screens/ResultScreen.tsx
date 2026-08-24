@@ -11,6 +11,7 @@ import { COLORS } from '../design';
 import { ArrowLeftIcon, RefreshIcon, ChevronRightIcon } from '../components/Icon';
 import { Tag, TagColor } from '../components/Tag';
 import { Button } from '../components/Button';
+import { GradientView } from '../components/GradientView';
 
 const GAME_TYPE_STYLE: Record<GameType, { label: string; color: TagColor }> = {
   luck:      { label: '운빨',   color: 'warning' },
@@ -30,19 +31,24 @@ interface Props {
   route: RouteProp<RecommendStackParamList, 'Result'>;
 }
 
-function GameCard({ game, onPress }: { game: GameSummary; onPress: () => void }) {
+function GameCard({ game, onPress, isTopPick }: { game: GameSummary; onPress: () => void; isTopPick?: boolean }) {
   const typeStyle = game.game_type ? GAME_TYPE_STYLE[game.game_type] : null;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
-      <View className="flex-row items-center overflow-hidden rounded-xl border border-border bg-card">
+      <View className="relative flex-row items-center overflow-hidden rounded-xl border border-border bg-card">
+        {/* 1순위 추천 강조 스트립 */}
+        {isTopPick && (
+          <GradientView gradient="warm" className="absolute inset-x-0 top-0 h-1" />
+        )}
+
         {/* 썸네일 */}
         {game.thumbnail ? (
           <Image source={{ uri: game.thumbnail }} className="h-[100px] w-[84px]" />
         ) : (
-          <View className="h-[100px] w-[84px] items-center justify-center bg-muted">
+          <GradientView gradient={isTopPick ? 'warm' : 'primary'} className="h-[100px] w-[84px] items-center justify-center">
             <Text className="rotate-[-6deg] text-3xl">🎲</Text>
-          </View>
+          </GradientView>
         )}
 
         <View className="flex-1 gap-2 p-3.5">
@@ -70,12 +76,13 @@ export default function ResultScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView className="flex-1 bg-background">
         <View className="flex-1 items-center justify-center px-10">
-          <View className="mb-5 h-[92px] w-[92px] rotate-[5deg] items-center justify-center rounded-3xl border border-border bg-muted">
+          <GradientView gradient="soft" className="mb-5 h-[92px] w-[92px] rotate-[5deg] items-center justify-center rounded-3xl border border-border">
             <Text className="text-[42px]">😅</Text>
-          </View>
+          </GradientView>
           <Text className="mb-1.5 text-center text-lg font-extrabold text-foreground">조건에 맞는 게임이 없어요</Text>
           <Text className="mb-5 text-center text-sm font-semibold text-muted-foreground">조건을 바꿔서 다시 시도해보세요</Text>
           <Button
+            variant="gradient"
             label="다시 찾기"
             size="sm"
             onPress={() => navigation.popToTop()}
@@ -110,9 +117,10 @@ export default function ResultScreen({ navigation, route }: Props) {
       <FlatList
         data={results.games}
         keyExtractor={item => String(item.bgg_id)}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <GameCard
             game={item}
+            isTopPick={index === 0}
             onPress={() => navigation.navigate('GameDetail', { bggId: item.bgg_id })}
           />
         )}

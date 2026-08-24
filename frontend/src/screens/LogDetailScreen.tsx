@@ -12,6 +12,7 @@ import { getLog, deleteLog } from '../services/logStorage';
 import { COLORS } from '../design';
 import { ArrowLeftIcon, DiceIcon } from '../components/Icon';
 import { Button } from '../components/Button';
+import { GradientView } from '../components/GradientView';
 import { cn } from '../lib/utils';
 
 const RESULT_TYPE_LABELS: Record<ResultType, string> = {
@@ -90,9 +91,15 @@ function ResultSection({ log }: { log: PlayLog }) {
                 {getPlayerName(log, entry.player_id)}
               </Text>
               <View className="flex-1 flex-row items-center">
-                <View className={cn('h-[30px] w-9 items-center justify-center rounded-lg', badge.bgClass)}>
-                  <Text className={cn('text-[15px] font-black', badge.textClass)}>{badge.text}</Text>
-                </View>
+                {entry.result === 'win' ? (
+                  <GradientView gradient="warm" className="h-[30px] w-9 items-center justify-center rounded-lg">
+                    <Text className="text-[15px] font-black text-white">{badge.text}</Text>
+                  </GradientView>
+                ) : (
+                  <View className={cn('h-[30px] w-9 items-center justify-center rounded-lg', badge.bgClass)}>
+                    <Text className={cn('text-[15px] font-black', badge.textClass)}>{badge.text}</Text>
+                  </View>
+                )}
               </View>
             </View>
           );
@@ -191,7 +198,7 @@ export default function LogDetailScreen({ navigation, route }: Props) {
       <SafeAreaView className="flex-1 bg-background">
         <View className="flex-1 items-center justify-center gap-4">
           <Text className="text-base font-bold text-foreground">기록을 찾을 수 없어요.</Text>
-          <Button label="돌아가기" onPress={() => navigation.goBack()} />
+          <Button variant="gradient" label="돌아가기" onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
     );
@@ -220,9 +227,9 @@ export default function LogDetailScreen({ navigation, route }: Props) {
             {log.game_thumbnail ? (
               <Image source={{ uri: log.game_thumbnail }} className="h-[90px] w-[90px]" resizeMode="cover" />
             ) : (
-              <View className="h-[90px] w-[90px] items-center justify-center bg-muted">
-                <DiceIcon size={40} color={COLORS.mutedForeground} />
-              </View>
+              <GradientView gradient="primary" className="h-[90px] w-[90px] items-center justify-center">
+                <DiceIcon size={40} color="#FFFFFF" />
+              </GradientView>
             )}
           </View>
           <View className="flex-1 justify-center gap-1.5">

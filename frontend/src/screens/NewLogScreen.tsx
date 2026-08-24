@@ -14,21 +14,11 @@ import { COLORS } from '../design';
 import { ArrowLeftIcon } from '../components/Icon';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { GradientView } from '../components/GradientView';
 import { TagColor } from '../components/Tag';
 import { cn } from '../lib/utils';
 
 const STEPS = ['game', 'session', 'result', 'review'] as const;
-
-// 결과 형식 선택 칩의 선택 상태 틴트 (Tag.tsx 팔레트와 동일한 톤)
-const RESULT_TINT: Record<TagColor, { bg: string; text: string }> = {
-  info:    { bg: 'bg-blue-50',   text: 'text-blue-700' },
-  success: { bg: 'bg-green-50',  text: 'text-green-700' },
-  warning: { bg: 'bg-amber-50',  text: 'text-amber-700' },
-  danger:  { bg: 'bg-red-50',    text: 'text-red-700' },
-  violet:  { bg: 'bg-violet-50', text: 'text-violet-700' },
-  teal:    { bg: 'bg-teal-50',   text: 'text-teal-700' },
-  neutral: { bg: 'bg-stone-100', text: 'text-stone-600' },
-};
 
 const WIN_LOSS_TINT: Record<WinLossResult, { bg: string; border: string }> = {
   win:  { bg: 'bg-green-600', border: 'border-green-600' },
@@ -226,11 +216,11 @@ export default function NewLogScreen({ navigation }: Props) {
         {/* Selected game badge */}
         {selectedGame && (
           <View className="mb-3 flex-row items-center gap-2.5">
-            <View className="flex-1 rounded-lg bg-green-50 px-3 py-2">
-              <Text className="text-sm font-extrabold text-green-700" numberOfLines={1}>
+            <GradientView gradient="primary" className="flex-1 rounded-lg px-3 py-2">
+              <Text className="text-sm font-extrabold text-white" numberOfLines={1}>
                 ✓  {selectedGame.name}
               </Text>
-            </View>
+            </GradientView>
             <TouchableOpacity onPress={clearSelectedGame} className="rounded-lg bg-muted px-2.5 py-2">
               <Text className="text-[13px] font-bold text-muted-foreground">취소</Text>
             </TouchableOpacity>
@@ -356,20 +346,25 @@ export default function NewLogScreen({ navigation }: Props) {
         <View className="mb-6 flex-row flex-wrap gap-2.5">
           {RESULT_TYPES.map(rt => {
             const active = resultType === rt.value;
-            const tint = RESULT_TINT[rt.tagColor];
-            return (
+            return active ? (
+              <GradientView key={rt.value} gradient="primary" className="w-[47%] rounded-xl">
+                <TouchableOpacity
+                  className="px-4 py-3.5"
+                  onPress={() => setResultType(rt.value)}
+                  activeOpacity={0.85}
+                >
+                  <Text className="mb-0.5 text-base font-extrabold text-white">{rt.label}</Text>
+                  <Text className="text-[11px] font-semibold text-white/80">{rt.desc}</Text>
+                </TouchableOpacity>
+              </GradientView>
+            ) : (
               <TouchableOpacity
                 key={rt.value}
-                className={cn(
-                  'w-[47%] rounded-xl border px-4 py-3.5',
-                  active ? cn(tint.bg, 'border-transparent') : 'border-border bg-background',
-                )}
+                className="w-[47%] rounded-xl border border-border bg-background px-4 py-3.5"
                 onPress={() => setResultType(rt.value)}
                 activeOpacity={0.85}
               >
-                <Text className={cn('mb-0.5 text-base font-extrabold', active ? tint.text : 'text-foreground')}>
-                  {rt.label}
-                </Text>
+                <Text className="mb-0.5 text-base font-extrabold text-foreground">{rt.label}</Text>
                 <Text className="text-[11px] font-semibold text-muted-foreground">{rt.desc}</Text>
               </TouchableOpacity>
             );
@@ -548,12 +543,13 @@ export default function NewLogScreen({ navigation }: Props) {
     <SafeAreaView className="flex-1 bg-background">
       {/* Progress dots */}
       <View className="mt-4 flex-row gap-1.5 self-center">
-        {STEPS.map((_, i) => (
-          <View
-            key={i}
-            className={cn('h-1.5 w-6 rounded-full bg-border', i <= stepIndex && 'bg-primary')}
-          />
-        ))}
+        {STEPS.map((_, i) =>
+          i <= stepIndex ? (
+            <GradientView key={i} gradient="primary" className="h-1.5 w-6 rounded-full" />
+          ) : (
+            <View key={i} className="h-1.5 w-6 rounded-full bg-border" />
+          ),
+        )}
       </View>
 
       {/* Back */}
@@ -585,12 +581,15 @@ export default function NewLogScreen({ navigation }: Props) {
             onPress={handleNext}
             disabled={!canProceed || saving}
             activeOpacity={0.85}
-            className={cn('items-center rounded-xl py-[18px]', canProceed ? 'bg-primary' : 'bg-muted')}
+            className={cn('items-center justify-center overflow-hidden rounded-xl py-[18px]', !canProceed && 'bg-muted')}
           >
+            {canProceed && (
+              <GradientView gradient="primary" className="absolute inset-0 rounded-xl" />
+            )}
             {saving ? (
-              <ActivityIndicator color={COLORS.primaryForeground} />
+              <ActivityIndicator color={canProceed ? '#FFFFFF' : COLORS.primaryForeground} />
             ) : (
-              <Text className={cn('text-lg font-bold', canProceed ? 'text-primary-foreground' : 'text-muted-foreground')}>
+              <Text className={cn('text-lg font-bold', canProceed ? 'text-white' : 'text-muted-foreground')}>
                 {nextLabel}
               </Text>
             )}

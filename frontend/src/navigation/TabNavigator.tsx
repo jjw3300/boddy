@@ -8,6 +8,7 @@ import CafeScreen from '../screens/CafeScreen';
 import ToolkitStack from './ToolkitStack';
 import ProfileStack from './ProfileStack';
 import { DiceIcon, BookIcon, MapPinIcon, WrenchIcon, UserIcon } from '../components/Icon';
+import { GradientView } from '../components/GradientView';
 import { COLORS } from '../design';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -20,14 +21,17 @@ interface TabIconProps {
 }
 
 function TabIcon({ Icon, focused }: TabIconProps) {
+  if (!focused) {
+    return (
+      <View className="h-9 w-9 items-center justify-center">
+        <Icon size={22} color={COLORS.mutedForeground} fill="transparent" />
+      </View>
+    );
+  }
   return (
-    <View className="items-center gap-1">
-      <Icon
-        size={22}
-        color={focused ? COLORS.primaryForeground : COLORS.mutedForeground}
-        fill={focused ? COLORS.primary : 'transparent'}
-      />
-    </View>
+    <GradientView gradient="primary" direction="diagonal" className="h-9 w-9 items-center justify-center rounded-xl">
+      <Icon size={20} color="#FFFFFF" fill="transparent" />
+    </GradientView>
   );
 }
 

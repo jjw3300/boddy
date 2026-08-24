@@ -7,6 +7,7 @@ import { ProfileStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
 import { ArrowLeftIcon, DiceIcon } from '../../components/Icon';
 import { Card } from '../../components/Card';
+import { GradientView } from '../../components/GradientView';
 
 interface Props {
   navigation: NativeStackNavigationProp<ProfileStackParamList, 'AppInfo'>;
@@ -27,9 +28,9 @@ export default function AppInfoScreen({ navigation }: Props) {
       <ScrollView contentContainerClassName="px-5 pb-10">
         {/* 앱 로고 + 이름 */}
         <View className="items-center gap-2 py-8">
-          <View className="mb-2 h-[76px] w-[76px] items-center justify-center rounded-xl border border-border bg-primary">
-            <DiceIcon size={40} color={COLORS.primaryForeground} fill="transparent" />
-          </View>
+          <GradientView gradient="primary" className="mb-2 h-[76px] w-[76px] items-center justify-center rounded-xl">
+            <DiceIcon size={40} color="#FFFFFF" fill="transparent" />
+          </GradientView>
           <Text className="text-[26px] font-bold tracking-tight text-foreground">Boddy</Text>
           <Text className="text-sm text-muted-foreground">보드게임 버디</Text>
           <View className="mt-1 rounded-full border border-border bg-accent px-4 py-1">

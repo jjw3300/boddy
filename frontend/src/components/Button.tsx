@@ -1,7 +1,9 @@
 import React from 'react';
-import { Pressable, Text, ActivityIndicator, PressableProps } from 'react-native';
+import { Pressable, Text, ActivityIndicator, PressableProps, StyleSheet } from 'react-native';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../lib/utils';
+import { GradientView } from './GradientView';
+import { GradientName } from '../design/gradients';
 
 const buttonVariants = cva(
   'flex-row items-center justify-center rounded-lg active:opacity-80',
@@ -13,6 +15,7 @@ const buttonVariants = cva(
         outline: 'bg-background border border-border',
         ghost: 'bg-transparent',
         destructive: 'bg-destructive',
+        gradient: 'bg-transparent',
       },
       size: {
         default: 'h-12 px-5',
@@ -33,6 +36,7 @@ const labelVariants = cva('text-[15px] font-semibold', {
       outline: 'text-foreground',
       ghost: 'text-foreground',
       destructive: 'text-destructive-foreground',
+      gradient: 'text-white',
     },
     size: {
       default: '',
@@ -51,21 +55,32 @@ export interface ButtonProps
   loading?: boolean;
   className?: string;
   labelClassName?: string;
+  /** variant="gradient"일 때 사용할 그라데이션 프리셋 또는 hex 배열 (기본: primary) */
+  gradient?: GradientName | string[];
   children?: React.ReactNode;
 }
 
 export function Button({
-  variant, size, label, loading, disabled,
+  variant, size, label, loading, disabled, gradient,
   className, labelClassName, children, ...props
 }: ButtonProps) {
+  const isGradient = variant === 'gradient';
   return (
     <Pressable
       disabled={disabled || loading}
-      className={cn(buttonVariants({ variant, size }), (disabled || loading) && 'opacity-40', className)}
+      className={cn(
+        buttonVariants({ variant, size }),
+        isGradient && 'overflow-hidden',
+        (disabled || loading) && 'opacity-40',
+        className,
+      )}
       {...props}
     >
+      {isGradient && (
+        <GradientView gradient={gradient ?? 'primary'} style={StyleSheet.absoluteFill} />
+      )}
       {loading ? (
-        <ActivityIndicator size="small" color={variant === 'default' ? '#1C1917' : '#78716C'} />
+        <ActivityIndicator size="small" color={variant === 'default' ? '#1C1917' : isGradient ? '#FFFFFF' : '#78716C'} />
       ) : label ? (
         <Text className={cn(labelVariants({ variant, size }), labelClassName)}>{label}</Text>
       ) : (
