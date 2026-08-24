@@ -11,7 +11,8 @@ export async function fetchRecommendations(
   });
 
   if (!response.ok) {
-    throw new Error(`추천 API 오류: ${response.status}`);
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? `추천 API 오류: ${response.status}`);
   }
 
   return response.json();
