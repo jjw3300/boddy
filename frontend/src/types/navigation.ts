@@ -1,13 +1,15 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { CompositeNavigationProp } from '@react-navigation/native';
-import { RecommendationResponse } from './index';
+import { RecommendationResponse, GameSummary } from './index';
 
 export type RecommendStackParamList = {
   Home: undefined;
   Recommendation: undefined;
   Result: { results: RecommendationResponse };
-  GameDetail: { bggId: number };
+  // game이 주어지면 상세 API 호출 없이 바로 그 데이터를 보여준다 —
+  // "오늘의 추천" 미리보기처럼 아직 백엔드에 없는 목데이터를 보여줄 때 사용.
+  GameDetail: { bggId: number; game?: GameSummary };
 };
 
 export type LogStackParamList = {

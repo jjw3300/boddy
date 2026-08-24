@@ -43,17 +43,18 @@ function InfoBlock({ label, value }: { label: string; value: string }) {
 }
 
 export default function GameDetailScreen({ navigation, route }: Props) {
-  const { bggId } = route.params;
-  const [game, setGame] = useState<GameSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { bggId, game: preloadedGame } = route.params;
+  const [game, setGame] = useState<GameSummary | null>(preloadedGame ?? null);
+  const [loading, setLoading] = useState(!preloadedGame);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (preloadedGame) return;
     fetchGameDetail(bggId)
       .then(setGame)
       .catch(() => setError('게임 정보를 불러오지 못했어요.'))
       .finally(() => setLoading(false));
-  }, [bggId]);
+  }, [bggId, preloadedGame]);
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -82,6 +83,15 @@ export default function GameDetailScreen({ navigation, route }: Props) {
 
       {!loading && !error && game && (
         <ScrollView contentContainerClassName="items-center px-6 pb-12" showsVerticalScrollIndicator={false}>
+          {preloadedGame && (
+            <View className="mb-4 w-full flex-row items-center gap-2 rounded-lg bg-accent px-3.5 py-2.5">
+              <Text className="text-sm">✨</Text>
+              <Text className="flex-1 text-[12px] font-semibold text-accent-foreground">
+                실제 추천 API 연동 전 미리보기 화면이에요
+              </Text>
+            </View>
+          )}
+
           {/* 썸네일 */}
           <View className="mb-5 mt-2 h-[180px] w-[180px] overflow-hidden rounded-xl border border-border">
             {game.thumbnail ? (
@@ -124,9 +134,11 @@ export default function GameDetailScreen({ navigation, route }: Props) {
           </View>
 
           {/* BGG ID */}
-          <View className="self-start">
-            <Text className="text-[11px] font-semibold text-muted-foreground">BGG ID: {game.bgg_id}</Text>
-          </View>
+          {!preloadedGame && (
+            <View className="self-start">
+              <Text className="text-[11px] font-semibold text-muted-foreground">BGG ID: {game.bgg_id}</Text>
+            </View>
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
