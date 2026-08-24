@@ -109,8 +109,20 @@ export function deriveFilterFromScores(accumulated: ScoreDelta[]): Recommendatio
     player_count: playerBucket ? Number(playerBucket) : null,
     difficulty: findFacet('difficulty:') as Difficulty | null,
     play_time: legacyTimeBucket(findFacet('time:')),
-    play_style: findFacet('style:') as PlayStyle | null,
+    play_style: resolvePlayStyle(totals),
   };
+}
+
+// 진행 스타일도 체크박스 다중 선택이라 "협력"과 "경쟁"을 동시에 고를 수 있다 —
+// 둘 다 골랐거나 아무 것도 안 골랐으면("상관없음") 필터 없이 both와 동일하게,
+// 하나만 골랐으면 그 값 그대로 백엔드에 넘긴다.
+function resolvePlayStyle(totals: Map<string, number>): PlayStyle | null {
+  const hasCooperative = totals.has('style:cooperative');
+  const hasCompetitive = totals.has('style:competitive');
+  if (hasCooperative && hasCompetitive) return 'both';
+  if (hasCooperative) return 'cooperative';
+  if (hasCompetitive) return 'competitive';
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

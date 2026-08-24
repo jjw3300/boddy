@@ -166,8 +166,8 @@ export default function RecommendationScreen({ navigation }: Props) {
         <Text className="text-sm font-semibold text-muted-foreground">{node.subtitle}</Text>
       </View>
 
-      {/* 선택지 */}
-      <ScrollView contentContainerClassName="gap-3.5 pb-8" showsVerticalScrollIndicator={false}>
+      {/* 선택지 — 80% 축소 (padding 24→19, 라벨 24→19, 설명 18→14, gap 14→11) */}
+      <ScrollView contentContainerClassName="gap-[11px] pb-8" showsVerticalScrollIndicator={false}>
         {node.options.map((option, i) => {
           const isSelected = selectedIds.includes(option.id);
           const accentColor = ACCENT_PALETTE[i % ACCENT_PALETTE.length];
@@ -183,20 +183,20 @@ export default function RecommendationScreen({ navigation }: Props) {
                   isSelected ? 'border-primary' : 'border-border',
                 )}
               >
-                <View className={cn('w-[7px]', ACCENT_BAR_CLASS[accentColor])} />
-                <View className="flex-1 px-[24px] py-[24px]">
-                  <Text className="mb-1.5 text-[24px] font-extrabold text-foreground">{option.label}</Text>
-                  <Text className="text-[18px] font-semibold text-muted-foreground">{option.description}</Text>
+                <View className={cn('w-[6px]', ACCENT_BAR_CLASS[accentColor])} />
+                <View className="flex-1 px-[19px] py-[19px]">
+                  <Text className="mb-1 text-[19px] font-extrabold text-foreground">{option.label}</Text>
+                  <Text className="text-[14px] font-semibold text-muted-foreground">{option.description}</Text>
                 </View>
                 {node.multiSelect && (
-                  <View className="items-center justify-center pr-5">
+                  <View className="items-center justify-center pr-4">
                     <View
                       className={cn(
-                        'h-7 w-7 items-center justify-center rounded-md border-2',
+                        'h-[22px] w-[22px] items-center justify-center rounded-md border-2',
                         isSelected ? 'border-primary bg-primary' : 'border-border bg-transparent',
                       )}
                     >
-                      {isSelected && <Text className="text-sm font-extrabold text-primary-foreground">✓</Text>}
+                      {isSelected && <Text className="text-xs font-extrabold text-primary-foreground">✓</Text>}
                     </View>
                   </View>
                 )}

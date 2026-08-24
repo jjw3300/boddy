@@ -138,16 +138,16 @@ export const RECOMMENDATION_TREE: Record<string, QuestionNode> = {
     options: genreOptionsFor('dexterity', 'play_style'),
   },
 
-  // ─── Q3. 진행 스타일 (기존, High weight) ────────────────────────────────
+  // ─── Q3. 진행 스타일 (기존, High weight — 복수 선택 가능) ────────────────
   play_style: {
     id: 'play_style',
     title: '어떤 방식을 선호하세요?',
-    subtitle: '게임 진행 스타일',
-    multiSelect: false,
+    subtitle: '게임 진행 스타일을 모두 골라주세요 (복수 선택 가능)',
+    multiSelect: true,
     options: [
+      { id: 'none', label: '상관없음 (모두 좋아함)', description: '아무거나 OK', scores: [], next: 'player_count' },
       { id: 'cooperative', label: '협력', description: '함께 이기자!', scores: [{ tag: 'style:cooperative', weight: WEIGHT.HIGH }], next: 'player_count' },
       { id: 'competitive', label: '경쟁', description: '내가 이긴다', scores: [{ tag: 'style:competitive', weight: WEIGHT.HIGH }], next: 'player_count' },
-      { id: 'both', label: '상관없음', description: '아무거나 OK', scores: [], next: 'player_count' },
     ],
   },
 
@@ -332,7 +332,17 @@ export function advanceFlow(state: FlowState & { currentNodeId: string }, select
   const newScores = selected.flatMap(o => o.scores);
   const newNextIds = [...new Set(selected.map(o => o.next).filter((id): id is string => id !== null))];
 
-  const queue = [...state.pendingQueue, ...newNextIds.filter(id => id !== state.currentNodeId)];
+  // 여러 갈래(예: 전략+파티+협력 상세)가 같은 다음 질문(예: play_style)을
+  // 가리키는 경우가 흔하다 — 이미 큐에 있거나 이미 지나온 질문이면 다시 넣지
+  // 않아야 그 질문이 갈래 수만큼 중복으로 나오는 걸 막는다.
+  const queue = [
+    ...state.pendingQueue,
+    ...newNextIds.filter(id =>
+      id !== state.currentNodeId
+      && !state.pendingQueue.includes(id)
+      && !state.visited.includes(id),
+    ),
+  ];
   const visited = [...state.visited, state.currentNodeId];
   const accumulated = [...state.accumulated, ...newScores];
 
