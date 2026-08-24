@@ -3,6 +3,8 @@ import {
   View, Text, TouchableOpacity, SafeAreaView, Animated, ScrollView, StyleSheet,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useIsFocused } from '@react-navigation/native';
+import RNShake from 'react-native-shake';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
 import { ArrowLeftIcon } from '../../components/Icon';
@@ -186,6 +188,18 @@ export default function DiceScreen({ navigation }: Props) {
     }, 60);
   }
 
+  // 핸드폰을 흔들면 굴리기 — 이 화면에 있을 때만 반응한다
+  const isFocused = useIsFocused();
+  const rollRef = useRef(roll);
+  rollRef.current = roll;
+
+  useEffect(() => {
+    const sub = RNShake.addListener(() => {
+      if (isFocused) rollRef.current();
+    });
+    return () => sub.remove();
+  }, [isFocused]);
+
   const total = values.slice(0, diceCount).reduce((s, v) => s + v, 0);
   // 4개 이상일 땐 한 줄에 항상 3개까지만 — 3+3, 3+2, 3+1로 고르게 두 줄로 나뉜다.
   const diceSize = diceCount <= 2 ? 100 : diceCount === 3 ? 86 : 68;
@@ -283,6 +297,8 @@ export default function DiceScreen({ navigation }: Props) {
             <Text className="text-2xl font-bold text-foreground">{total}</Text>
           </View>
         )}
+
+        <Text className="mt-4 text-xs font-medium text-muted-foreground">📳 흔들어서 굴릴 수도 있어요</Text>
       </View>
 
       {/* 굴리기 버튼 */}

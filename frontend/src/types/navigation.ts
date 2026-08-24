@@ -12,15 +12,15 @@ export type RecommendStackParamList = {
 
 export type LogStackParamList = {
   LogList: undefined;
-  NewLog: undefined;
+  NewLog: { initialPlayers?: { name: string; score: number }[] } | undefined;
   LogDetail: { logId: string };
+  Scoreboard: undefined;
 };
 
 export type ToolkitStackParamList = {
   ToolkitHome: undefined;
   Dice: undefined;
   Coin: undefined;
-  Scoreboard: undefined;
   FirstPlayer: undefined;
 };
 

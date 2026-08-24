@@ -1,97 +1,200 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
-  SafeAreaView, ScrollView, Animated, StyleSheet,
+  View, Text, TouchableOpacity, SafeAreaView, Animated, GestureResponderEvent,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
 import { ArrowLeftIcon, FingerIcon } from '../../components/Icon';
-import { Button } from '../../components/Button';
 import { GradientView } from '../../components/GradientView';
 import { GradientName } from '../../design/gradients';
-import { cn } from '../../lib/utils';
 
 interface Props {
   navigation: NativeStackNavigationProp<ToolkitStackParamList, 'FirstPlayer'>;
 }
 
-// 룰렛 슬롯 딜레이 시퀀스 (ms) — 빠르게 시작해 점점 느려짐
-const ROULETTE_DELAYS = [70, 70, 80, 90, 110, 130, 160, 200, 250, 310, 380, 460, 540];
+interface Dot { id: string; x: number; y: number; }
+type Phase = 'idle' | 'ready' | 'battle' | 'done';
 
-// 하이라이트된 플레이어 카드 배경 — 순서대로 순환 배정
-const HIGHLIGHT_GRADIENTS: GradientName[] = ['primary', 'warm', 'deep'];
+const MIN_PLAYERS = 2;
+const READY_MS = 1300;
+const DOT_SIZE = 64;
+const DOT_GRADIENTS: GradientName[] = ['primary', 'warm', 'deep'];
 
-let _pid = 0;
-function pid() { return String(++_pid); }
+// ─── "버티기 대결" ───────────────────────────────────────────────────────────
+// Chwazi류의 "손가락 올리기" 아이디어를 빌리되, 한 번에 정답을 보여주는 대신
+// 손가락이 하나씩 랜덤하게 "탈락"하며 버티는 사람이 이기는 서바이벌 방식으로
+// 재해석했다. 먼저 손을 떼면(포기하면) 바로 탈락 — 끝까지 버틴 손가락이 선.
 
 export default function FirstPlayerScreen({ navigation }: Props) {
-  const [players, setPlayers] = useState<{ id: string; name: string }[]>([
-    { id: pid(), name: '플레이어 1' },
-    { id: pid(), name: '플레이어 2' },
-  ]);
-  const [nameInput, setNameInput] = useState('');
-  const [highlighted, setHighlighted] = useState<number | null>(null);
+  const [dots, setDots] = useState<Dot[]>([]);
+  const [eliminated, setEliminated] = useState<string[]>([]);
+  const [hidden, setHidden] = useState<string[]>([]);
   const [winner, setWinner] = useState<string | null>(null);
-  const [animating, setAnimating] = useState(false);
+  const [phase, setPhase] = useState<Phase>('idle');
 
-  const winnerScale = useRef(new Animated.Value(1)).current;
+  // 터치 이벤트는 setState보다 훨씬 빠르게 연속으로 들어오기 때문에, 판정 로직은
+  // ref를 단일 진실 소스로 삼는다. state는 화면을 다시 그리기 위한 거울일 뿐이다.
+  const phaseRef = useRef<Phase>('idle');
+  const participantsRef = useRef<string[]>([]);
+  const eliminatedRef = useRef<Set<string>>(new Set());
+  const hiddenRef = useRef<Set<string>>(new Set());
+  const winnerRef = useRef<string | null>(null);
+  const dotsRef = useRef<Dot[]>([]);
+  dotsRef.current = dots;
 
-  function addPlayer() {
-    const name = nameInput.trim() || `플레이어 ${players.length + 1}`;
-    setPlayers(prev => [...prev, { id: pid(), name }]);
-    setNameInput('');
+  const readyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const battleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const offsetRef = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<View>(null);
+
+  const popAnimsRef = useRef<Map<string, Animated.Value>>(new Map());
+  function getPopAnim(id: string) {
+    let a = popAnimsRef.current.get(id);
+    if (!a) {
+      a = new Animated.Value(1);
+      popAnimsRef.current.set(id, a);
+    }
+    return a;
   }
 
-  function removePlayer(id: string) {
-    if (players.length <= 2) return;
-    setPlayers(prev => prev.filter(p => p.id !== id));
-    setHighlighted(null);
-    setWinner(null);
+  const winnerGlow = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => () => {
+    if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
+    if (battleTimerRef.current) clearInterval(battleTimerRef.current);
+  }, []);
+
+  function setPhaseBoth(p: Phase) {
+    phaseRef.current = p;
+    setPhase(p);
   }
 
-  function pickFirst() {
-    if (animating || players.length < 2) return;
-    setAnimating(true);
+  function resetGame() {
+    if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
+    if (battleTimerRef.current) clearInterval(battleTimerRef.current);
+    participantsRef.current = [];
+    eliminatedRef.current = new Set();
+    hiddenRef.current = new Set();
+    winnerRef.current = null;
+    popAnimsRef.current.clear();
+    winnerGlow.setValue(1);
+    setDots([]);
+    setEliminated([]);
+    setHidden([]);
     setWinner(null);
-    setHighlighted(null);
+    setPhaseBoth('idle');
+  }
 
-    const winnerIdx = Math.floor(Math.random() * players.length);
+  function popOut(id: string) {
+    const anim = getPopAnim(id);
+    Animated.sequence([
+      Animated.timing(anim, { toValue: 1.5, duration: 120, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: true }),
+    ]).start(() => {
+      hiddenRef.current.add(id);
+      setHidden(Array.from(hiddenRef.current));
+    });
+  }
 
-    let step = 0;
-    function nextStep() {
-      const remaining = ROULETTE_DELAYS.length - step;
-      const idx = (winnerIdx - remaining + players.length * 10) % players.length;
-      setHighlighted(idx);
+  function eliminate(ids: string[]) {
+    const fresh = ids.filter(id => !eliminatedRef.current.has(id) && id !== winnerRef.current);
+    if (fresh.length === 0) return;
+    fresh.forEach(id => {
+      eliminatedRef.current.add(id);
+      popOut(id);
+    });
+    setEliminated(Array.from(eliminatedRef.current));
+    checkForWinner();
+  }
 
-      if (step >= ROULETTE_DELAYS.length - 1) {
-        setHighlighted(winnerIdx);
-        setWinner(players[winnerIdx].name);
-        setAnimating(false);
-
+  function checkForWinner() {
+    if (phaseRef.current !== 'battle') return;
+    const survivors = participantsRef.current.filter(id => !eliminatedRef.current.has(id));
+    if (survivors.length === 1) {
+      const winId = survivors[0];
+      winnerRef.current = winId;
+      setWinner(winId);
+      if (battleTimerRef.current) clearInterval(battleTimerRef.current);
+      setPhaseBoth('done');
+      Animated.loop(
         Animated.sequence([
-          Animated.timing(winnerScale, { toValue: 1.12, duration: 160, useNativeDriver: true }),
-          Animated.timing(winnerScale, { toValue: 0.96, duration: 120, useNativeDriver: true }),
-          Animated.timing(winnerScale, { toValue: 1.05, duration: 100, useNativeDriver: true }),
-          Animated.timing(winnerScale, { toValue: 1, duration: 80, useNativeDriver: true }),
-        ]).start();
+          Animated.timing(winnerGlow, { toValue: 1.18, duration: 480, useNativeDriver: true }),
+          Animated.timing(winnerGlow, { toValue: 1, duration: 480, useNativeDriver: true }),
+        ]),
+      ).start();
+    } else if (survivors.length === 0) {
+      // 마지막 순간 모두 손을 뗌 — 승자 없이 처음부터 다시
+      resetGame();
+    }
+  }
+
+  function startBattle() {
+    participantsRef.current = dotsRef.current.map(d => d.id);
+    eliminatedRef.current = new Set();
+    setEliminated([]);
+    setPhaseBoth('battle');
+
+    battleTimerRef.current = setInterval(() => {
+      const survivors = participantsRef.current.filter(id => !eliminatedRef.current.has(id));
+      if (survivors.length <= 1) {
+        if (battleTimerRef.current) clearInterval(battleTimerRef.current);
+        checkForWinner();
         return;
       }
+      const pick = survivors[Math.floor(Math.random() * survivors.length)];
+      eliminate([pick]);
+    }, 550 + Math.random() * 350);
+  }
 
-      step++;
-      setTimeout(nextStep, ROULETTE_DELAYS[step] ?? 500);
+  function handleLayout() {
+    containerRef.current?.measureInWindow((x, y) => {
+      offsetRef.current = { x, y };
+    });
+  }
+
+  function updateFromEvent(evt: GestureResponderEvent) {
+    const liveTouches = evt.nativeEvent.touches ?? [];
+    const liveIds = new Set(liveTouches.map(t => t.identifier));
+
+    // 준비/대결 중 손가락을 뗀 경우 — 대결 중이면 즉시 탈락 처리
+    if (phaseRef.current === 'ready' || phaseRef.current === 'battle') {
+      const lifted = dotsRef.current
+        .map(d => d.id)
+        .filter(id => !liveIds.has(id) && !eliminatedRef.current.has(id));
+      if (lifted.length > 0 && phaseRef.current === 'battle') {
+        eliminate(lifted);
+      }
     }
 
-    setTimeout(nextStep, ROULETTE_DELAYS[0]);
+    const nextDots: Dot[] = liveTouches.map(t => ({
+      id: t.identifier,
+      x: t.pageX - offsetRef.current.x,
+      y: t.pageY - offsetRef.current.y,
+    }));
+    setDots(nextDots);
+
+    if (phaseRef.current === 'idle' && nextDots.length >= MIN_PLAYERS) {
+      setPhaseBoth('ready');
+      readyTimerRef.current = setTimeout(() => {
+        if (phaseRef.current === 'ready' && dotsRef.current.length >= MIN_PLAYERS) {
+          startBattle();
+        } else {
+          setPhaseBoth('idle');
+        }
+      }, READY_MS);
+    } else if (phaseRef.current === 'ready' && nextDots.length < MIN_PLAYERS) {
+      if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
+      setPhaseBoth('idle');
+    }
   }
 
-  function reset() {
-    setHighlighted(null);
-    setWinner(null);
-    winnerScale.setValue(1);
-  }
-
-  const canPick = players.length >= 2 && !animating;
+  const statusText = {
+    idle: `모두 손가락을 화면에 올려주세요 (최소 ${MIN_PLAYERS}명)`,
+    ready: '곧 시작합니다...',
+    battle: '버티세요! 마지막까지 남는 손가락이 선이에요',
+    done: '🎉 선이 정해졌어요!',
+  }[phase];
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -100,107 +203,71 @@ export default function FirstPlayerScreen({ navigation }: Props) {
         <Text className="text-sm font-semibold text-foreground">도구 모음</Text>
       </TouchableOpacity>
 
-      <View className="mb-5 flex-row items-center gap-2 px-6">
+      <View className="mb-1 flex-row items-center gap-2 px-6">
         <FingerIcon size={22} color={COLORS.foreground} fill="transparent" />
         <Text className="text-xl font-bold tracking-tight text-foreground">선 정하기</Text>
       </View>
+      <Text className="mb-4 px-6 text-[13px] font-semibold text-muted-foreground">{statusText}</Text>
 
-      <ScrollView
-        contentContainerClassName="px-6 pb-5"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <View
+        ref={containerRef}
+        onLayout={handleLayout}
+        className="mx-6 mb-6 flex-1 overflow-hidden rounded-2xl border-2 border-dashed border-border bg-card"
+        onStartShouldSetResponder={() => phase !== 'done'}
+        onMoveShouldSetResponder={() => phase !== 'done'}
+        onResponderGrant={updateFromEvent}
+        onResponderMove={updateFromEvent}
+        onResponderRelease={updateFromEvent}
+        onResponderTerminate={updateFromEvent}
       >
-        {/* 플레이어 목록 */}
-        <View className="mb-4 gap-2.5">
-          {players.map((p, idx) => {
-            const isHighlighted = highlighted === idx;
-            const isWinner = winner !== null && isHighlighted;
-            const highlightGradient = HIGHLIGHT_GRADIENTS[idx % HIGHLIGHT_GRADIENTS.length];
+        {dots.length === 0 && (
+          <View className="flex-1 items-center justify-center">
+            <FingerIcon size={40} color={COLORS.mutedForeground} fill="transparent" />
+          </View>
+        )}
 
-            const cardContent = (
-              <View
-                className="relative overflow-hidden rounded-xl border border-border px-5 py-4"
-                style={{ backgroundColor: isHighlighted ? undefined : COLORS.background }}
+        {dots.map((dot, idx) => {
+          if (hidden.includes(dot.id)) return null;
+          const isWinner = winner === dot.id;
+          const isOut = eliminated.includes(dot.id) && !isWinner;
+          const size = isWinner ? DOT_SIZE * 1.5 : DOT_SIZE;
+          const anim = isWinner ? winnerGlow : getPopAnim(dot.id);
+          const gradient = DOT_GRADIENTS[idx % DOT_GRADIENTS.length];
+
+          return (
+            <Animated.View
+              key={dot.id}
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: dot.x - size / 2,
+                top: dot.y - size / 2,
+                transform: [{ scale: anim }],
+                opacity: isOut ? anim.interpolate({ inputRange: [0, 1, 1.5], outputRange: [0, 1, 1] }) : 1,
+              }}
+            >
+              <GradientView
+                gradient={isWinner ? 'primary' : gradient}
+                className="items-center justify-center rounded-full"
+                style={{ width: size, height: size }}
               >
-                {isHighlighted && (
-                  <GradientView gradient={highlightGradient} style={StyleSheet.absoluteFill} />
-                )}
-                <View className="flex-row items-center">
-                  <Text
-                    className="flex-1 text-lg font-extrabold"
-                    style={{ color: isHighlighted ? '#FFFFFF' : COLORS.foreground }}
-                  >
-                    {isWinner ? '🎉  ' : ''}{p.name}
-                    {isWinner ? '  🎉' : ''}
-                  </Text>
-                  {players.length > 2 && !animating && (
-                    <TouchableOpacity
-                      className="h-7 w-7 items-center justify-center rounded-full bg-red-50"
-                      onPress={() => removePlayer(p.id)}
-                    >
-                      <Text className="text-base font-bold text-red-600">×</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            );
-
-            return isWinner ? (
-              <Animated.View key={p.id} style={{ transform: [{ scale: winnerScale }] }}>
-                {cardContent}
-              </Animated.View>
-            ) : (
-              <View key={p.id}>{cardContent}</View>
-            );
-          })}
-        </View>
-
-        {/* 플레이어 추가 */}
-        <View className="mb-5 flex-row items-center gap-2">
-          <TextInput
-            className="h-11 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-semibold text-foreground"
-            value={nameInput}
-            onChangeText={setNameInput}
-            placeholder="이름 추가..."
-            placeholderTextColor={COLORS.mutedForeground}
-            onSubmitEditing={addPlayer}
-            returnKeyType="done"
-            editable={!animating}
-          />
-          <Button label="+ 추가" size="sm" onPress={addPlayer} />
-        </View>
-
-        {/* 결과 안내 */}
-        {winner && (
-          <View className="mb-3 items-center rounded-xl border border-border bg-accent p-4">
-            <Text className="mb-1 text-xs font-extrabold tracking-wide text-foreground">첫 번째 플레이어</Text>
-            <Text className="text-2xl font-extrabold text-foreground">{winner}</Text>
-          </View>
-        )}
-
-        {winner && (
-          <View className="items-center">
-            <TouchableOpacity className="rounded-lg border border-border bg-secondary px-5 py-2.5" onPress={reset}>
-              <Text className="text-[13px] font-extrabold text-secondary-foreground">다시 정하기</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* 정하기 버튼 (하단 고정) */}
-      <View className="px-6 pb-5">
-        <TouchableOpacity
-          onPress={pickFirst}
-          disabled={!canPick}
-          activeOpacity={0.85}
-          className={cn('items-center overflow-hidden rounded-xl py-[18px]', !canPick && 'bg-muted')}
-        >
-          {canPick && <GradientView gradient="primary" style={StyleSheet.absoluteFill} />}
-          <Text className={cn('text-lg font-bold', canPick ? 'text-white' : 'text-muted-foreground')}>
-            {animating ? '정하는 중...' : '👆  선 정하기!'}
-          </Text>
-        </TouchableOpacity>
+                {isWinner && <Text className="text-3xl">👑</Text>}
+              </GradientView>
+            </Animated.View>
+          );
+        })}
       </View>
+
+      {phase === 'done' && (
+        <View className="gap-2.5 px-6 pb-5">
+          <TouchableOpacity
+            className="items-center rounded-lg border border-border bg-secondary px-5 py-3"
+            onPress={resetGame}
+          >
+            <Text className="text-[15px] font-extrabold text-secondary-foreground">다시하기</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

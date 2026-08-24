@@ -4,14 +4,14 @@ import {
   SafeAreaView, ScrollView, Alert, StyleSheet,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ToolkitStackParamList } from '../../types/navigation';
-import { COLORS } from '../../design';
-import { ArrowLeftIcon, TrophyIcon } from '../../components/Icon';
-import { Button } from '../../components/Button';
-import { GradientView } from '../../components/GradientView';
+import { LogStackParamList } from '../types/navigation';
+import { COLORS } from '../design';
+import { ArrowLeftIcon, TrophyIcon } from '../components/Icon';
+import { Button } from '../components/Button';
+import { GradientView } from '../components/GradientView';
 
 interface Props {
-  navigation: NativeStackNavigationProp<ToolkitStackParamList, 'Scoreboard'>;
+  navigation: NativeStackNavigationProp<LogStackParamList, 'Scoreboard'>;
 }
 
 interface Player {
@@ -84,12 +84,18 @@ export default function ScoreboardScreen({ navigation }: Props) {
     ]);
   }
 
+  function saveAsLog() {
+    navigation.navigate('NewLog', {
+      initialPlayers: sorted.map(p => ({ name: p.name, score: p.score })),
+    });
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-row items-center justify-between px-4 pt-2">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center gap-1.5 px-2 py-2.5">
           <ArrowLeftIcon size={20} color={COLORS.foreground} />
-          <Text className="text-sm font-semibold text-foreground">도구 모음</Text>
+          <Text className="text-sm font-semibold text-foreground">플레이 기록</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={resetAll} className="rounded-lg border border-border bg-red-50 px-3.5 py-2">
           <Text className="text-[13px] font-extrabold text-red-600">초기화</Text>
@@ -103,7 +109,7 @@ export default function ScoreboardScreen({ navigation }: Props) {
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="gap-2.5 px-4 pb-8"
+        contentContainerClassName="gap-2.5 px-4 pb-4"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -194,6 +200,17 @@ export default function ScoreboardScreen({ navigation }: Props) {
           <Button label="+ 추가" size="sm" onPress={addPlayer} />
         </View>
       </ScrollView>
+
+      {/* 기록으로 저장 */}
+      <View className="px-6 pb-5 pt-2">
+        <Button
+          variant="gradient"
+          label="📋  이 결과로 기록 남기기"
+          onPress={saveAsLog}
+          className="h-14 rounded-xl"
+          labelClassName="text-[15px]"
+        />
+      </View>
     </SafeAreaView>
   );
 }

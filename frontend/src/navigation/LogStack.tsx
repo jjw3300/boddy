@@ -4,6 +4,7 @@ import { LogStackParamList } from '../types/navigation';
 import LogListScreen from '../screens/LogListScreen';
 import NewLogScreen from '../screens/NewLogScreen';
 import LogDetailScreen from '../screens/LogDetailScreen';
+import ScoreboardScreen from '../screens/ScoreboardScreen';
 
 const Stack = createNativeStackNavigator<LogStackParamList>();
 
@@ -13,6 +14,7 @@ export default function LogStack() {
       <Stack.Screen name="LogList" component={LogListScreen} />
       <Stack.Screen name="NewLog" component={NewLogScreen} />
       <Stack.Screen name="LogDetail" component={LogDetailScreen} />
+      <Stack.Screen name="Scoreboard" component={ScoreboardScreen} />
     </Stack.Navigator>
   );
 }

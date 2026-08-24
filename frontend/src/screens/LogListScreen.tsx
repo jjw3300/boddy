@@ -9,7 +9,7 @@ import { LogStackParamList } from '../types/navigation';
 import { PlayLog, ResultType } from '../types/log';
 import { getLogs } from '../services/logStorage';
 import { COLORS } from '../design';
-import { BookIcon, ChevronRightIcon, DiceIcon } from '../components/Icon';
+import { BookIcon, ChevronRightIcon, DiceIcon, TrophyIcon } from '../components/Icon';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Tag } from '../components/Tag';
@@ -68,7 +68,15 @@ export default function LogListScreen({ navigation }: Props) {
           <BookIcon size={24} color={COLORS.foreground} fill="transparent" />
           <Text className="text-2xl font-bold tracking-tight text-foreground">플레이 기록</Text>
         </View>
-        <Button label="+ 기록하기" size="sm" onPress={() => navigation.navigate('NewLog')} />
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Scoreboard')}
+            className="h-9 w-9 items-center justify-center rounded-lg border border-border bg-background"
+          >
+            <TrophyIcon size={17} color={COLORS.foreground} fill="transparent" />
+          </TouchableOpacity>
+          <Button label="+ 기록하기" size="sm" onPress={() => navigation.navigate('NewLog')} />
+        </View>
       </View>
 
       {logs.length === 0 ? (

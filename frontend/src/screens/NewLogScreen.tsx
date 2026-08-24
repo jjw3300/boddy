@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
 import { LogStackParamList } from '../types/navigation';
 import { PlayLog, LogPlayer, ResultType, WinLossResult, ResultData } from '../types/log';
 import { GameSearchResult } from '../types';
@@ -40,13 +41,21 @@ const RESULT_TYPES: {
 
 interface Props {
   navigation: NativeStackNavigationProp<LogStackParamList, 'NewLog'>;
+  route: RouteProp<LogStackParamList, 'NewLog'>;
 }
 
 function newPlayer(name: string): LogPlayer {
   return { id: generateId(), name };
 }
 
-export default function NewLogScreen({ navigation }: Props) {
+export default function NewLogScreen({ navigation, route }: Props) {
+  // 점수판에서 "이 결과로 기록 남기기"로 넘어온 경우 플레이어·점수를 미리 채운다
+  const [initialFromScoreboard] = useState(() => {
+    const src = route.params?.initialPlayers;
+    if (!src || src.length === 0) return null;
+    return src.map(p => ({ id: generateId(), name: p.name, score: p.score }));
+  });
+
   const [stepIndex, setStepIndex] = useState(0);
 
   // Step 0 – Game search
@@ -61,12 +70,20 @@ export default function NewLogScreen({ navigation }: Props) {
 
   // Step 1 – Session
   const [date, setDate] = useState(todayStr());
-  const [players, setPlayers] = useState<LogPlayer[]>([newPlayer('나')]);
+  const [players, setPlayers] = useState<LogPlayer[]>(() =>
+    initialFromScoreboard
+      ? initialFromScoreboard.map(p => ({ id: p.id, name: p.name }))
+      : [newPlayer('나')],
+  );
   const [playerInput, setPlayerInput] = useState('');
 
   // Step 2 – Result
   const [resultType, setResultType] = useState<ResultType>('score');
-  const [scoreEntries, setScoreEntries] = useState<{ player_id: string; score: string }[]>([]);
+  const [scoreEntries, setScoreEntries] = useState<{ player_id: string; score: string }[]>(() =>
+    initialFromScoreboard
+      ? initialFromScoreboard.map(p => ({ player_id: p.id, score: String(p.score) }))
+      : [],
+  );
   const [winLossEntries, setWinLossEntries] = useState<{ player_id: string; result: WinLossResult }[]>([]);
   const [rankEntries, setRankEntries] = useState<{ player_id: string; rank: string }[]>([]);
   const [freeText, setFreeText] = useState('');
@@ -77,11 +94,12 @@ export default function NewLogScreen({ navigation }: Props) {
 
   const scrollRef = useRef<ScrollView>(null);
 
-  // players가 바뀌면 결과 입력 필드를 초기화
+  // players가 바뀌면 결과 입력 필드를 동기화 — 이미 값이 있는 플레이어는 유지하고
+  // 새로 추가/삭제된 플레이어만 채워 넣거나 없앤다 (점수판 연동 시 미리 채운 점수가 지워지지 않도록)
   useEffect(() => {
-    setScoreEntries(players.map(p => ({ player_id: p.id, score: '' })));
-    setWinLossEntries(players.map(p => ({ player_id: p.id, result: 'win' })));
-    setRankEntries(players.map(p => ({ player_id: p.id, rank: '' })));
+    setScoreEntries(prev => players.map(p => prev.find(e => e.player_id === p.id) ?? { player_id: p.id, score: '' }));
+    setWinLossEntries(prev => players.map(p => prev.find(e => e.player_id === p.id) ?? { player_id: p.id, result: 'win' }));
+    setRankEntries(prev => players.map(p => prev.find(e => e.player_id === p.id) ?? { player_id: p.id, rank: '' }));
   }, [players]);
 
   async function handleSearch() {
@@ -282,6 +300,14 @@ export default function NewLogScreen({ navigation }: Props) {
           <Text className="mb-1 text-[23px] font-extrabold leading-[31px] text-foreground">세션 정보</Text>
           <Text className="text-[13px] font-semibold text-muted-foreground">날짜와 참여 인원을 설정하세요</Text>
         </View>
+
+        {initialFromScoreboard && (
+          <View className="mb-5 rounded-lg border border-border bg-accent px-3.5 py-2.5">
+            <Text className="text-[13px] font-semibold text-accent-foreground">
+              📋 점수판 결과에서 참여자와 점수를 불러왔어요
+            </Text>
+          </View>
+        )}
 
         {/* Date */}
         <View className="mb-6">

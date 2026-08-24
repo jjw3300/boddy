@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, Animated, StyleSheet } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useIsFocused } from '@react-navigation/native';
+import RNShake from 'react-native-shake';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
 import { ArrowLeftIcon } from '../../components/Icon';
@@ -64,6 +66,18 @@ export default function CoinScreen({ navigation }: Props) {
 
   const cfg = FACE_CONFIG[displayFace];
 
+  // 핸드폰을 흔들면 던지기 — 이 화면에 있을 때만 반응한다
+  const isFocused = useIsFocused();
+  const flipRef = useRef(flip);
+  flipRef.current = flip;
+
+  useEffect(() => {
+    const sub = RNShake.addListener(() => {
+      if (isFocused) flipRef.current();
+    });
+    return () => sub.remove();
+  }, [isFocused]);
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center gap-1.5 self-start px-6 py-2.5">
@@ -112,6 +126,8 @@ export default function CoinScreen({ navigation }: Props) {
         {result === null && (
           <Text className="text-[15px] font-semibold text-muted-foreground">동전을 던져보세요</Text>
         )}
+
+        <Text className="mt-4 text-xs font-medium text-muted-foreground">📳 흔들어서 던질 수도 있어요</Text>
       </View>
 
       {/* 던지기 버튼 */}

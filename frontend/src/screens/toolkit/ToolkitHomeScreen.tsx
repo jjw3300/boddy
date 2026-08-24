@@ -3,7 +3,7 @@ import { View, Text, SafeAreaView, ScrollView, TouchableOpacity } from 'react-na
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
-import { DiceIcon, CoinIcon, TrophyIcon, FingerIcon, WrenchIcon, ChevronRightIcon } from '../../components/Icon';
+import { DiceIcon, CoinIcon, FingerIcon, WrenchIcon, ChevronRightIcon } from '../../components/Icon';
 import { GradientView } from '../../components/GradientView';
 import { GradientName } from '../../design/gradients';
 
@@ -20,10 +20,9 @@ interface ToolCard {
 }
 
 const TOOLS: ToolCard[] = [
-  { label: '주사위', desc: '1~6면체 다이스 굴리기', Icon: DiceIcon, gradient: 'primary', route: 'Dice' },
-  { label: '동전 던지기', desc: '앞면 · 뒷면 랜덤 선택', Icon: CoinIcon, gradient: 'warm', route: 'Coin' },
-  { label: '점수판', desc: '플레이어별 실시간 기록', Icon: TrophyIcon, gradient: 'deep', route: 'Scoreboard' },
-  { label: '선 정하기', desc: '첫 번째 플레이어 뽑기', Icon: FingerIcon, gradient: 'primary', route: 'FirstPlayer' },
+  { label: '주사위', desc: '1~6면체 다이스 굴리기 · 흔들어서 굴리기', Icon: DiceIcon, gradient: 'primary', route: 'Dice' },
+  { label: '동전 던지기', desc: '앞면 · 뒷면 랜덤 선택 · 흔들어서 던지기', Icon: CoinIcon, gradient: 'warm', route: 'Coin' },
+  { label: '선 정하기', desc: '손가락 버티기 대결로 한 명 뽑기', Icon: FingerIcon, gradient: 'deep', route: 'FirstPlayer' },
 ];
 
 export default function ToolkitHomeScreen({ navigation }: Props) {
