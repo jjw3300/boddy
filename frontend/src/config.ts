@@ -4,4 +4,9 @@
 // 실기기: 개발 PC의 실제 IP 주소로 변경
 const BASE_URL = 'http://localhost:8000/api/v1';
 
+// https://developers.kakao.com 내 애플리케이션 > 앱 키 > JavaScript 키
+// (백엔드 KAKAO_REST_API_KEY와는 다른 키). 플랫폼 설정 > Web에 사이트 도메인으로
+// http://localhost 를 등록해야 WebView에서 지도가 정상적으로 뜬다.
+export const KAKAO_JS_KEY = 'cdf8486a7272e0a1fcb9f4eb049863cd';
+
 export default BASE_URL;

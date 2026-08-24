@@ -6,12 +6,13 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { CafeSummary } from '../types';
 import { fetchNearbyCafes } from '../api/cafe';
-import { requestLocationPermission, getCurrentPosition } from '../services/location';
+import { requestLocationPermission, getCurrentPosition, Coords } from '../services/location';
 import { COLORS } from '../design';
 import { MapPinIcon, RefreshIcon, ChevronRightIcon } from '../components/Icon';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { GradientView } from '../components/GradientView';
+import { CafeMap } from '../components/CafeMap';
 
 type Status = 'loading' | 'denied' | 'error' | 'ready';
 
@@ -49,6 +50,7 @@ export default function CafeScreen() {
   const [status, setStatus] = useState<Status>('loading');
   const [errorMsg, setErrorMsg] = useState('');
   const [cafes, setCafes] = useState<CafeSummary[]>([]);
+  const [userLocation, setUserLocation] = useState<Coords | null>(null);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -59,6 +61,7 @@ export default function CafeScreen() {
         return;
       }
       const { lat, lng } = await getCurrentPosition();
+      setUserLocation({ lat, lng });
       const data = await fetchNearbyCafes(lat, lng);
       setCafes(data.cafes);
       setStatus('ready');
@@ -108,6 +111,17 @@ export default function CafeScreen() {
           <Text className="mb-1.5 text-center text-lg font-bold text-foreground">카페를 불러오지 못했어요</Text>
           <Text className="mb-5 text-center text-sm font-semibold text-muted-foreground">{errorMsg}</Text>
           <Button label="다시 시도" variant="gradient" size="sm" onPress={load} className="px-5" />
+        </View>
+      )}
+
+      {status === 'ready' && userLocation && (
+        <View
+          style={{
+            height: 260, marginHorizontal: 24, marginBottom: 14, borderRadius: 16, overflow: 'hidden',
+            backgroundColor: COLORS.muted,
+          }}
+        >
+          <CafeMap userLocation={userLocation} cafes={cafes} style={{ flex: 1 }} />
         </View>
       )}
 
