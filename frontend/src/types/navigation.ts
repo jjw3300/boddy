@@ -22,6 +22,9 @@ export type ToolkitStackParamList = {
   Dice: undefined;
   Coin: undefined;
   FirstPlayer: undefined;
+  TurnTimer: undefined;
+  Counter: undefined;
+  Roulette: undefined;
 };
 
 export type ProfileStackParamList = {

@@ -3,7 +3,10 @@ import { View, Text, SafeAreaView, ScrollView, TouchableOpacity } from 'react-na
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ToolkitStackParamList } from '../../types/navigation';
 import { COLORS } from '../../design';
-import { DiceIcon, CoinIcon, FingerIcon, WrenchIcon, ChevronRightIcon } from '../../components/Icon';
+import {
+  DiceIcon, CoinIcon, FingerIcon, WrenchIcon, ChevronRightIcon,
+  TimerIcon, CounterIcon, RouletteIcon,
+} from '../../components/Icon';
 import { GradientView } from '../../components/GradientView';
 import { GradientName } from '../../design/gradients';
 
@@ -23,6 +26,9 @@ const TOOLS: ToolCard[] = [
   { label: '주사위', desc: '1~6면체 다이스 굴리기 · 흔들어서 굴리기', Icon: DiceIcon, gradient: 'primary', route: 'Dice' },
   { label: '동전 던지기', desc: '앞면 · 뒷면 랜덤 선택 · 흔들어서 던지기', Icon: CoinIcon, gradient: 'warm', route: 'Coin' },
   { label: '선 정하기', desc: '손가락 버티기 대결로 한 명 뽑기', Icon: FingerIcon, gradient: 'deep', route: 'FirstPlayer' },
+  { label: '턴 타이머', desc: '체스 시계 · 카운트다운으로 장고 방지', Icon: TimerIcon, gradient: 'deep', route: 'TurnTimer' },
+  { label: '만능 카운터', desc: '승점 · 체력 · 자원 최대 8명까지 집계', Icon: CounterIcon, gradient: 'primary', route: 'Counter' },
+  { label: '룰렛', desc: '벌칙 · 팀 나누기 무작위 뽑기', Icon: RouletteIcon, gradient: 'warm', route: 'Roulette' },
 ];
 
 export default function ToolkitHomeScreen({ navigation }: Props) {

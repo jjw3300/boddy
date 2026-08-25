@@ -234,6 +234,42 @@ export function FingerIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: 
   );
 }
 
+export function TimerIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line x1="10" y1="2" x2="14" y2="2" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="12" y1="2" x2="12" y2="5" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Circle cx="12" cy="14" r="8" fill={fill} stroke={color} strokeWidth="2" />
+      <Line x1="12" y1="14" x2="12" y2="10" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="12" y1="14" x2="15" y2="14" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function CounterIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="3" width="18" height="18" rx="4" fill={fill} stroke={color} strokeWidth="2" />
+      <Line x1="7" y1="8" x2="11" y2="8" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="9" y1="6" x2="9" y2="10" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="13" y1="16" x2="17" y2="16" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function RouletteIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 2L14 6H10L12 2Z" fill={color} />
+      <Circle cx="12" cy="13" r="9" fill={fill} stroke={color} strokeWidth="2" />
+      <Line x1="12" y1="13" x2="12" y2="4" stroke={color} strokeWidth="1.5" />
+      <Line x1="12" y1="13" x2="19.2" y2="17.2" stroke={color} strokeWidth="1.5" />
+      <Line x1="12" y1="13" x2="4.8" y2="17.2" stroke={color} strokeWidth="1.5" />
+      <Circle cx="12" cy="13" r="1.8" fill={color} />
+    </Svg>
+  );
+}
+
 export function StarIcon({ size = 24, color = DEFAULT_COLOR, fill = 'none' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
