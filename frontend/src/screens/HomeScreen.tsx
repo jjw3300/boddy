@@ -1,68 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RecommendStackParamList } from '../types/navigation';
 import { GameSummary, GameType } from '../types';
+import { getRecentRecommendation, RecentRecommendation } from '../services/recommendationHistory';
 import { COLORS } from '../design';
-import { SearchIcon, ChevronRightIcon, RefreshIcon, DiceIcon } from '../components/Icon';
+import { SearchIcon, ChevronRightIcon, DiceIcon, TrophyIcon } from '../components/Icon';
 import { GradientView } from '../components/GradientView';
 import { Card } from '../components/Card';
 import { Tag, TagColor } from '../components/Tag';
+import { cn } from '../lib/utils';
 
 interface Props {
   navigation: NativeStackNavigationProp<RecommendStackParamList, 'Home'>;
 }
-
-// ─── "오늘의 추천 보드게임" 목데이터 ─────────────────────────────────────────
-// 게임 DB(BGG) API 키가 아직 발급 전이라, 연동됐을 때 화면이 어떻게 보일지
-// 미리 확인할 수 있도록 실제 API 응답과 동일한 모양(GameSummary)의 예시 데이터를 쓴다.
-// 실제 연동 시 이 배열과 아래 컴포넌트의 mock 부분만 API 호출로 바꾸면 된다.
-const MOCK_DAILY_GAMES: GameSummary[] = [
-  {
-    bgg_id: -1,
-    name: '카탄의 개척자들',
-    thumbnail: null,
-    min_players: 3,
-    max_players: 4,
-    play_time: 90,
-    weight: 2.4,
-    description: '주사위로 자원을 얻고 길과 마을을 지어 섬을 개척하는 전략 게임. 거래와 협상이 승패를 가른다.',
-    game_type: 'strategy',
-  },
-  {
-    bgg_id: -2,
-    name: '스플렌더',
-    thumbnail: null,
-    min_players: 2,
-    max_players: 4,
-    play_time: 30,
-    weight: 1.8,
-    description: '보석 카드를 모아 발전소를 지어나가는 엔진 빌딩 게임. 규칙이 쉬워 입문용으로도 좋다.',
-    game_type: 'strategy',
-  },
-  {
-    bgg_id: -3,
-    name: '코드네임',
-    thumbnail: null,
-    min_players: 4,
-    max_players: 8,
-    play_time: 15,
-    weight: 1.3,
-    description: '한 단어로 우리 팀의 단어를 모두 맞추는 팀 파티 게임. 인원이 많을수록 재밌다.',
-    game_type: 'party',
-  },
-  {
-    bgg_id: -4,
-    name: '아줄',
-    thumbnail: null,
-    min_players: 2,
-    max_players: 4,
-    play_time: 45,
-    weight: 1.8,
-    description: '타일을 모아 나만의 벽을 예쁘게 채워가는 추상 전략 게임. 간단하지만 고민할 거리가 많다.',
-    game_type: 'strategy',
-  },
-];
 
 const GAME_TYPE_STYLE: Record<GameType, { label: string; color: TagColor }> = {
   luck:      { label: '운빨',   color: 'warning' },
@@ -71,20 +23,71 @@ const GAME_TYPE_STYLE: Record<GameType, { label: string; color: TagColor }> = {
   strategy:  { label: '뇌지컬', color: 'info' },
 };
 
+// 등수 배지 — ResultScreen과 동일하게 1~3위는 메달 색으로 강조
+const RANK_BADGE_STYLE: Record<number, { bg: string; text: string }> = {
+  1: { bg: 'bg-[#FFD700]', text: 'text-black' },
+  2: { bg: 'bg-[#C0C0C0]', text: 'text-black' },
+  3: { bg: 'bg-[#CD7F32]', text: 'text-white' },
+};
+
+function rankBadgeStyle(rank: number): { bg: string; text: string } {
+  return RANK_BADGE_STYLE[rank] ?? { bg: 'bg-black/70', text: 'text-white' };
+}
+
 function weightLabel(weight: number): string {
   if (weight < 2.0) return '쉬움';
   if (weight < 3.5) return '보통';
   return '어려움';
 }
 
-export default function HomeScreen({ navigation }: Props) {
-  const [dailyIndex, setDailyIndex] = useState(0);
-  const dailyGame = MOCK_DAILY_GAMES[dailyIndex];
-  const typeStyle = dailyGame.game_type ? GAME_TYPE_STYLE[dailyGame.game_type] : null;
+function relativeTime(iso: string): string {
+  const diffMin = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (diffMin < 1) return '방금 전';
+  if (diffMin < 60) return `${diffMin}분 전`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay}일 전`;
+  return new Date(iso).toISOString().slice(0, 10);
+}
 
-  function showAnother() {
-    setDailyIndex(i => (i + 1) % MOCK_DAILY_GAMES.length);
-  }
+const TOP_N = 3;
+
+function RankedGameRow({ game, onPress }: { game: GameSummary; onPress: () => void }) {
+  const typeStyle = game.game_type ? GAME_TYPE_STYLE[game.game_type] : null;
+  const badge = rankBadgeStyle(game.rank ?? 99);
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+      <Card className="flex-row items-center gap-3 p-3">
+        <View className={cn('h-8 w-8 items-center justify-center rounded-full', badge.bg)}>
+          <Text className={cn('text-[13px] font-extrabold', badge.text)}>{game.rank}</Text>
+        </View>
+        <View className="flex-1 gap-1.5">
+          <Text className="text-[15px] font-extrabold text-foreground" numberOfLines={1}>{game.name}</Text>
+          <View className="flex-row flex-wrap gap-1.5">
+            {typeStyle && <Tag label={typeStyle.label} color={typeStyle.color} />}
+            <Tag label={`👥 ${game.min_players}~${game.max_players}`} />
+            <Tag label={`⏱ ${game.play_time}분`} />
+            <Tag label={weightLabel(game.weight)} />
+          </View>
+        </View>
+        <ChevronRightIcon size={18} color={COLORS.mutedForeground} />
+      </Card>
+    </TouchableOpacity>
+  );
+}
+
+export default function HomeScreen({ navigation }: Props) {
+  const [recent, setRecent] = useState<RecentRecommendation | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      getRecentRecommendation().then(setRecent);
+    }, []),
+  );
+
+  const topGames = recent?.games.slice(0, TOP_N) ?? [];
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -113,42 +116,38 @@ export default function HomeScreen({ navigation }: Props) {
           </GradientView>
         </TouchableOpacity>
 
-        {/* 오늘의 추천 보드게임 */}
+        {/* 최근 추천 게임 순위 */}
         <View className="mb-3 mt-8 flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <Text className="text-base font-extrabold text-foreground">오늘의 추천 보드게임</Text>
-            <View className="rounded-md bg-accent px-1.5 py-[3px]">
-              <Text className="text-[10px] font-extrabold text-accent-foreground">미리보기</Text>
-            </View>
-          </View>
-          <TouchableOpacity onPress={showAnother} className="flex-row items-center gap-1 py-1" activeOpacity={0.7}>
-            <RefreshIcon size={13} color={COLORS.mutedForeground} />
-            <Text className="text-xs font-bold text-muted-foreground">다른 게임</Text>
-          </TouchableOpacity>
+          <Text className="text-base font-extrabold text-foreground">최근 추천 게임 순위</Text>
+          {recent && (
+            <Text className="text-xs font-bold text-muted-foreground">{relativeTime(recent.createdAt)}</Text>
+          )}
         </View>
 
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => navigation.navigate('GameDetail', { bggId: dailyGame.bgg_id, game: dailyGame })}
-        >
-          <Card className="overflow-hidden p-0">
-            <GradientView gradient="soft" className="h-[110px] items-center justify-center">
-              <Text className="text-5xl">🎲</Text>
+        {topGames.length > 0 ? (
+          <View className="gap-2.5">
+            {topGames.map(game => (
+              <RankedGameRow
+                key={game.bgg_id}
+                game={game}
+                onPress={() => navigation.navigate('GameDetail', { bggId: game.bgg_id, game })}
+              />
+            ))}
+          </View>
+        ) : (
+          /* 빈 상태 — 아직 추천받은 적이 없을 때 */
+          <Card className="items-center gap-3 px-6 py-8">
+            <GradientView gradient="soft" className="h-14 w-14 items-center justify-center rounded-2xl">
+              <TrophyIcon size={26} color={COLORS.foreground} fill="transparent" />
             </GradientView>
-            <View className="gap-2.5 p-4">
-              <Text className="text-[17px] font-extrabold text-foreground">{dailyGame.name}</Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {typeStyle && <Tag label={typeStyle.label} color={typeStyle.color} />}
-                <Tag label={`👥 ${dailyGame.min_players}~${dailyGame.max_players}`} />
-                <Tag label={`⏱ ${dailyGame.play_time}분`} />
-                <Tag label={weightLabel(dailyGame.weight)} />
-              </View>
-              <Text className="text-[13px] font-medium leading-[19px] text-muted-foreground" numberOfLines={2}>
-                {dailyGame.description}
+            <View className="items-center gap-1">
+              <Text className="text-[15px] font-extrabold text-foreground">아직 추천받은 게임이 없어요</Text>
+              <Text className="text-center text-[13px] font-medium text-muted-foreground">
+                위 버튼으로 나에게 맞는 게임을 찾아보면{'\n'}여기에 순위로 보여드릴게요
               </Text>
             </View>
           </Card>
-        </TouchableOpacity>
+        )}
 
       </ScrollView>
     </SafeAreaView>

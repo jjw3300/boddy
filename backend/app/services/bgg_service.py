@@ -7,6 +7,7 @@ from app.config import settings
 from app.schemas.recommendation import GameSummary, RecommendationFilter
 from app.services import cache
 from app.services.translate_service import translate_to_korean
+from app.services import game_metadata_service
 
 # ───────────────────────────── 상수 ─────────────────────────────
 
@@ -37,37 +38,11 @@ GAME_TYPE_CATEGORY_IDS = {
 MAX_RETRIES = 3
 RETRY_DELAY = 2.0  # 초
 
-# /hot(트렌딩 ~50개)만 쓰면 그 주의 인기작에만 풀이 쏠린다. BGG API에는
-# "장르/조건으로 검색"하는 엔드포인트가 없어서(이름 검색만 가능) 대신 여러
-# 장르·메커니즘을 아우르는 유명 보드게임 제목을 미리 정해두고 /search로 BGG
-# ID를 찾아 풀에 합친다 — 새 API나 토큰 없이 기존 엔드포인트만으로 풀을 넓히는
-# 방법. 그래도 부족하면(여전히 필터 조합이 자주 0건이면) BGG 랭킹 데이터셋을
-# 통째로 DB에 적재하는 방식으로 넘어갈 것.
-SEED_GAME_TITLES = [
-    # 전략 — 일꾼 놓기 / 덱빌딩 / 타일 놓기 / 4X / 추상 / 엔진빌딩 등
-    "Terraforming Mars", "Brass: Birmingham", "Gloomhaven", "Twilight Imperium",
-    "Scythe", "Ark Nova", "Great Western Trail", "Puerto Rico", "Agricola",
-    "Caverna", "Viticulture", "Wingspan", "Everdell", "Terra Mystica",
-    "Gaia Project", "Through the Ages", "Concordia", "Power Grid", "El Grande",
-    "Tigris & Euphrates", "Hive", "Onitama", "Star Realms", "Dominion", "Clank!",
-    "7 Wonders", "Ticket to Ride", "Carcassonne", "Catan",
-    # 파티 / 심리 / 상호작용
-    "Codenames", "One Night Ultimate Werewolf", "Secret Hitler", "Coup",
-    "Avalon", "Sheriff of Nottingham", "Skull", "Bang!", "Two Rooms and a Boom",
-    "Spyfall", "Dixit", "Just One", "Wavelength", "Poetry for Neanderthals",
-    # 협동 / 피지컬 / 기타
-    "Pandemic", "Pandemic Legacy", "Forbidden Island", "Forbidden Desert",
-    "Spirit Island", "The Crew", "Hanabi", "Mysterium",
-    "Betrayal at House on the Hill", "Flamme Rouge", "Kingdomino", "Azul",
-    "Splendor", "Sushi Go", "King of Tokyo", "Love Letter", "No Thanks!",
-    "Camel Up", "Incan Gold",
-]
-
 
 # ───────────────────────────── 공개 API ─────────────────────────────
 
-async def search_games(filters: RecommendationFilter) -> list[GameSummary]:
-    """필터 조건에 맞는 게임 목록 반환 (최대 20개)."""
+async def search_games(filters: RecommendationFilter) -> tuple[list[GameSummary], list[str]]:
+    """필터 조건에 맞는 게임 목록 반환 (최대 20개, 순위 매김) + 완화된 필터 목록."""
     hot_games, seed_games = await asyncio.gather(_fetch_hot_games(), _fetch_seed_games())
 
     seen_ids: set[str] = set()
@@ -79,7 +54,8 @@ async def search_games(filters: RecommendationFilter) -> list[GameSummary]:
 
     game_ids = [g["id"] for g in merged]
     detailed_games = await _fetch_game_details(game_ids)
-    return _apply_filters(detailed_games, filters)[:20]
+    metadata_map = await game_metadata_service.get_metadata_map([int(gid) for gid in game_ids])
+    return _apply_filters(detailed_games, filters, metadata_map)
 
 
 async def search_games_by_name(query: str) -> list[dict]:
@@ -126,7 +102,9 @@ async def fetch_game_detail(bgg_id: int) -> GameSummary | None:
 
     game = items[0]
     detected_type = _detect_game_type(game)
-    summary = _parse_game(game, detected_type, include_description=True)
+    metadata_map = await game_metadata_service.get_metadata_map([bgg_id])
+    korean_name = metadata_map.get(bgg_id).korean_name if bgg_id in metadata_map else None
+    summary = _parse_game(game, detected_type, include_description=True, korean_name_override=korean_name)
 
     if summary.description:
         translated = await translate_to_korean(summary.description)
@@ -158,37 +136,11 @@ async def _fetch_hot_games() -> list[dict]:
 
 
 async def _fetch_seed_games() -> list[dict]:
-    """SEED_GAME_TITLES를 이름 검색으로 BGG ID에 매핑해 캐싱해둔다.
-    고정 목록이라 자주 안 바뀌므로 TTL을 길게(24시간) 잡는다."""
-    cache_key = "seed_games"
-    cached = cache.get(cache_key)
-    if cached is not None:
-        return cached
-
-    semaphore = asyncio.Semaphore(5)
-
-    async def resolve(title: str) -> dict | None:
-        async with semaphore:
-            try:
-                results = await search_games_by_name(title)
-            except Exception:
-                return None
-            if not results:
-                return None
-            # BGG 검색 결과의 첫 번째가 항상 원하는 게임은 아니다(리스킨/확장판/
-            # 이름만 비슷한 무관한 게임이 먼저 나올 수 있음) — 이름이 정확히
-            # 일치하는 결과를 우선하고, 없으면 첫 번째로 폴백한다.
-            exact = next(
-                (r for r in results if r["name"].strip().lower() == title.strip().lower()),
-                None,
-            )
-            best = exact or results[0]
-            return {"id": str(best["bgg_id"]), "name": best["name"]}
-
-    resolved = await asyncio.gather(*(resolve(t) for t in SEED_GAME_TITLES))
-    result = [r for r in resolved if r is not None]
-    cache.set(cache_key, result, ttl=60 * 60 * 24)  # 24시간 캐시
-    return result
+    """DB에 미리 저장해둔 시드 게임 id 목록 (app/scripts/seed_games.py로 채움).
+    예전엔 앱이 매 콜드 캐시마다 /search를 70번 호출해서 느렸는데, 이제 DB
+    조회 한 번으로 끝난다 — BGG API 호출 없음."""
+    ids = await game_metadata_service.get_seed_bgg_ids()
+    return [{"id": str(bgg_id), "name": ""} for bgg_id in ids]
 
 
 async def _fetch_game_details(game_ids: list[str]) -> list[dict]:
@@ -271,41 +223,123 @@ async def _get_with_retry(
 
 # ───────────────────────────── 필터링 ─────────────────────────────
 
-def _apply_filters(games: list[dict], filters: RecommendationFilter) -> list[GameSummary]:
-    result = []
+# 조건에 맞는 게임이 하나도 없을 때, 이 순서대로 하나씩 하드 필터를 풀어서
+# 재시도한다 — 시간/난이도는 비교적 relax하기 쉽고, 인원수는 실제로 몇 명이
+# 모였는지에 달린 물리적 제약이라 가장 마지막에 푼다. 장르 대분류는 애초에
+# 하드 필터가 아니라 스코어링에만 반영되므로 이 목록에 없다.
+_FALLBACK_ORDER = ["play_time", "difficulty", "play_style", "player_count"]
+
+
+def _passes_hard_filters(
+    summary: GameSummary,
+    is_coop: bool,
+    filters: RecommendationFilter,
+    active: set[str],
+) -> bool:
+    if "player_count" in active and filters.player_count is not None:
+        if not (summary.min_players <= filters.player_count <= summary.max_players):
+            return False
+
+    if "difficulty" in active and filters.difficulty is not None:
+        min_w, max_w = DIFFICULTY_RANGE[filters.difficulty]
+        if not (min_w <= summary.weight < max_w):
+            return False
+
+    if "play_time" in active and filters.play_time is not None:
+        min_t, max_t = PLAY_TIME_RANGE[filters.play_time]
+        if not (min_t <= summary.play_time < max_t):
+            return False
+
+    if "play_style" in active and filters.play_style is not None and filters.play_style != "both":
+        if filters.play_style == "cooperative" and not is_coop:
+            return False
+        if filters.play_style == "competitive" and is_coop:
+            return False
+
+    return True
+
+
+def _score_game(
+    summary: GameSummary,
+    detected_type: str | None,
+    is_coop: bool,
+    filters: RecommendationFilter,
+) -> float:
+    """조건에 얼마나 잘 맞는지 점수화. 장르 대분류는 하드 필터가 아니라
+    여기서만 반영된다 — 맞으면 가산점, 안 맞아도 탈락시키지 않는다."""
+    score = 0.0
+
+    if filters.game_type is not None:
+        score += 3.0 if detected_type == filters.game_type else 0.0
+
+    if filters.difficulty is not None:
+        min_w, max_w = DIFFICULTY_RANGE[filters.difficulty]
+        if min_w <= summary.weight < max_w:
+            score += 2.0
+        else:
+            mid = (min_w + max_w) / 2
+            score -= min(abs(summary.weight - mid), 3.0) * 0.3
+
+    if filters.play_time is not None:
+        min_t, max_t = PLAY_TIME_RANGE[filters.play_time]
+        if min_t <= summary.play_time < max_t:
+            score += 2.0
+        else:
+            mid = min_t if max_t >= 9999 else (min_t + max_t) / 2
+            score -= min(abs(summary.play_time - mid) / 30, 3.0) * 0.3
+
+    if filters.player_count is not None:
+        if summary.min_players <= filters.player_count <= summary.max_players:
+            score += 2.0
+
+    if filters.play_style is not None and filters.play_style != "both":
+        wants_coop = filters.play_style == "cooperative"
+        if wants_coop == is_coop:
+            score += 2.0
+
+    return score
+
+
+def _apply_filters(
+    games: list[dict],
+    filters: RecommendationFilter,
+    metadata_map: dict[int, "game_metadata_service.GameMetadata"] | None = None,
+) -> tuple[list[GameSummary], list[str]]:
+    metadata_map = metadata_map or {}
+    parsed: list[tuple[GameSummary, str | None, bool]] = []
     for game in games:
         try:
             detected_type = _detect_game_type(game)
-            summary = _parse_game(game, detected_type)
+            meta = metadata_map.get(int(game["@id"]))
+            summary = _parse_game(game, detected_type, korean_name_override=meta.korean_name if meta else None)
+            is_coop = _is_cooperative(game)
         except Exception:
             continue
+        parsed.append((summary, detected_type, is_coop))
 
-        if filters.player_count is not None:
-            if not (summary.min_players <= filters.player_count <= summary.max_players):
-                continue
+    active = {"player_count", "difficulty", "play_time", "play_style"}
+    relaxed: list[str] = []
+    matched = [p for p in parsed if _passes_hard_filters(p[0], p[2], filters, active)]
 
-        if filters.difficulty is not None:
-            min_w, max_w = DIFFICULTY_RANGE[filters.difficulty]
-            if not (min_w <= summary.weight < max_w):
-                continue
+    for field in _FALLBACK_ORDER:
+        if matched:
+            break
+        active.discard(field)
+        relaxed.append(field)
+        matched = [p for p in parsed if _passes_hard_filters(p[0], p[2], filters, active)]
 
-        if filters.play_time is not None:
-            min_t, max_t = PLAY_TIME_RANGE[filters.play_time]
-            if not (min_t <= summary.play_time < max_t):
-                continue
+    # 그래도 하나도 없으면(극단적으로 좁은 풀) 전체 후보를 스코어링만으로 추천
+    if not matched:
+        matched = parsed
 
-        if filters.play_style is not None and filters.play_style != "both":
-            is_coop = _is_cooperative(game)
-            if filters.play_style == "cooperative" and not is_coop:
-                continue
-            if filters.play_style == "competitive" and is_coop:
-                continue
+    matched.sort(key=lambda p: _score_game(p[0], p[1], p[2], filters), reverse=True)
 
-        if filters.game_type is not None and detected_type != filters.game_type:
-            continue
-
+    result = []
+    for rank, (summary, _, _) in enumerate(matched[:20], start=1):
+        summary.rank = rank
         result.append(summary)
-    return result
+
+    return result, relaxed
 
 
 # ───────────────────────────── 파싱 / 판별 ─────────────────────────────
@@ -333,6 +367,7 @@ def _parse_game(
     game: dict,
     game_type=None,
     include_description: bool = False,
+    korean_name_override: str | None = None,
 ) -> GameSummary:
     names = game.get("name", [])
     if isinstance(names, dict):
@@ -340,6 +375,10 @@ def _parse_game(
     primary_name = next(
         (n["@value"] for n in names if n.get("@type") == "primary"), "Unknown"
     )
+
+    # 한국어 이름 우선순위: 1) 큐레이션 DB(korean_name_override, 정발/통용명)
+    # → 2) BGG에 등록된 alternate name 중 한글 포함된 것 → 3) 영어 원문.
+    display_name = korean_name_override or _find_hangul_alt_name(names) or primary_name
 
     stats = game.get("statistics", {}).get("ratings", {})
     weight = float(stats.get("averageweight", {}).get("@value", 0) or 0)
@@ -353,7 +392,7 @@ def _parse_game(
 
     return GameSummary(
         bgg_id=int(game["@id"]),
-        name=primary_name,
+        name=display_name,
         thumbnail=game.get("thumbnail"),
         min_players=int(game.get("minplayers", {}).get("@value", 1) or 1),
         max_players=int(game.get("maxplayers", {}).get("@value", 10) or 10),
@@ -362,6 +401,16 @@ def _parse_game(
         description=description,
         game_type=game_type,
     )
+
+
+def _find_hangul_alt_name(names: list[dict]) -> str | None:
+    """BGG는 게임마다 각국 발매판 이름을 alternate name으로 등록해두는 경우가
+    많다 — 그중 한글이 포함된 게 있으면 그게 보통 한국 정발명이다."""
+    for n in names:
+        value = n.get("@value", "")
+        if any("가" <= ch <= "힣" for ch in value):
+            return value
+    return None
 
 
 def _is_cooperative(game: dict) -> bool:

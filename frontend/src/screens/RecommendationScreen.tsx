@@ -7,6 +7,7 @@ import {
   RECOMMENDATION_TREE, ROOT_NODE_ID, createInitialFlowState, advanceFlow, FlowState,
 } from '../data/recommendationTree';
 import { deriveFilterFromScores, applyPreciseTimeFilter } from '../data/recommendationScoring';
+import { saveRecentRecommendation } from '../services/recommendationHistory';
 import { COLORS } from '../design';
 import { ArrowLeftIcon } from '../components/Icon';
 import { TagColor } from '../components/Tag';
@@ -46,10 +47,29 @@ export default function RecommendationScreen({ navigation }: Props) {
     try {
       const filters = deriveFilterFromScores(finalFlow.accumulated);
       const data = await fetchRecommendations(filters);
+
       // 시간 질문이 이제 4단계 하드 필터라 백엔드가 아는 3단계보다 더 정확하게
-      // 한 번 더 걸러야 진짜 "이 시간 안에" 필터가 된다.
-      const filteredGames = applyPreciseTimeFilter(data.games, finalFlow.accumulated);
-      navigation.navigate('Result', { results: { games: filteredGames, total: filteredGames.length } });
+      // 한 번 더 걸러야 진짜 "이 시간 안에" 필터가 된다. 단, 백엔드가 이미
+      // "최소 1개는 추천되게" 조건을 완화해서 찾아준 결과인데 여기서 다시
+      // 0개로 걸러버리면 그 보장이 깨지니, 그럴 때만 정밀 필터를 건너뛴다.
+      const preciseFiltered = applyPreciseTimeFilter(data.games, finalFlow.accumulated);
+      const relaxedFilters = [...data.relaxed_filters];
+      let games = preciseFiltered;
+      if (preciseFiltered.length === 0 && data.games.length > 0) {
+        games = data.games;
+        relaxedFilters.push('play_time');
+      }
+
+      // 클라이언트에서 한 번 더 걸러내면 백엔드가 매긴 등수에 구멍이 생기니
+      // 최종 노출 순서 기준으로 다시 1위부터 번호를 매긴다.
+      const rankedGames = games.map((g, i) => ({ ...g, rank: i + 1 }));
+
+      // 홈 화면 "최근 추천 게임 순위"에서 보여줄 수 있게 저장해둔다.
+      saveRecentRecommendation(rankedGames).catch(() => {});
+
+      navigation.navigate('Result', {
+        results: { games: rankedGames, total: rankedGames.length, relaxed_filters: relaxedFilters },
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : '추천을 받아오지 못했어요.');
     } finally {

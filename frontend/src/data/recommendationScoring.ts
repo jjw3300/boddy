@@ -31,6 +31,7 @@ function timeBucket(minutes: number): 'time:short' | 'time:medium' | 'time:long'
 }
 
 function matchesPlayerBucket(game: TaggableGame, tag: string): boolean {
+  if (tag === 'players:1') return game.min_players <= 1 && game.max_players >= 1;
   if (tag === 'players:2') return game.min_players <= 2 && game.max_players >= 2;
   if (tag === 'players:3') return game.min_players <= 4 && game.max_players >= 3;
   if (tag === 'players:5') return game.max_players >= 5;

@@ -16,8 +16,8 @@ async def get_recommendations(filters: RecommendationFilter):
     - play_time: short(<30분) | medium(30~90분) | long(>90분)
     """
     try:
-        games = await search_games(filters)
+        games, relaxed_filters = await search_games(filters)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"BGG API 오류: {str(e)}")
 
-    return RecommendationResponse(games=games, total=len(games))
+    return RecommendationResponse(games=games, total=len(games), relaxed_filters=relaxed_filters)

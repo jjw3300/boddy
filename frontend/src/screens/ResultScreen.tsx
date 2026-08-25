@@ -12,6 +12,7 @@ import { ArrowLeftIcon, RefreshIcon, ChevronRightIcon } from '../components/Icon
 import { Tag, TagColor } from '../components/Tag';
 import { Button } from '../components/Button';
 import { GradientView } from '../components/GradientView';
+import { cn } from '../lib/utils';
 
 const GAME_TYPE_STYLE: Record<GameType, { label: string; color: TagColor }> = {
   luck:      { label: '운빨',   color: 'warning' },
@@ -31,6 +32,24 @@ interface Props {
   route: RouteProp<RecommendStackParamList, 'Result'>;
 }
 
+// 1~3위는 메달 색으로 강조, 나머지는 기본 회색조 배지
+const RANK_BADGE_STYLE: Record<number, { bg: string; text: string }> = {
+  1: { bg: 'bg-[#FFD700]', text: 'text-black' },
+  2: { bg: 'bg-[#C0C0C0]', text: 'text-black' },
+  3: { bg: 'bg-[#CD7F32]', text: 'text-white' },
+};
+
+function rankBadgeStyle(rank: number): { bg: string; text: string } {
+  return RANK_BADGE_STYLE[rank] ?? { bg: 'bg-black/70', text: 'text-white' };
+}
+
+const FILTER_LABEL: Record<string, string> = {
+  player_count: '인원수',
+  difficulty: '난이도',
+  play_time: '플레이 시간',
+  play_style: '협력/경쟁',
+};
+
 function GameCard({ game, onPress, isTopPick }: { game: GameSummary; onPress: () => void; isTopPick?: boolean }) {
   const typeStyle = game.game_type ? GAME_TYPE_STYLE[game.game_type] : null;
 
@@ -40,6 +59,13 @@ function GameCard({ game, onPress, isTopPick }: { game: GameSummary; onPress: ()
         {/* 1순위 추천 강조 스트립 */}
         {isTopPick && (
           <GradientView gradient="warm" className="absolute inset-x-0 top-0 h-1" />
+        )}
+
+        {/* 등수 배지 — 1~3위는 메달 색으로 강조 */}
+        {game.rank !== null && (
+          <View className={cn('absolute left-1.5 top-1.5 z-10 min-w-[26px] items-center justify-center rounded-full px-1.5 py-[3px]', rankBadgeStyle(game.rank).bg)}>
+            <Text className={cn('text-[11px] font-extrabold', rankBadgeStyle(game.rank).text)}>{game.rank}위</Text>
+          </View>
         )}
 
         {/* 썸네일 */}
@@ -113,6 +139,19 @@ export default function ResultScreen({ navigation, route }: Props) {
           <Text className="text-[13px] font-extrabold text-foreground">{results.total}개</Text>
         </View>
       </View>
+
+      {/* 조건을 완화해서 찾은 경우 안내 */}
+      {results.relaxed_filters.length > 0 && (
+        <View className="mx-6 mb-4 rounded-lg border border-border bg-muted px-3.5 py-3">
+          <Text className="text-[12px] font-semibold text-muted-foreground">
+            💡 딱 맞는 게임이 없어서{' '}
+            <Text className="font-extrabold text-foreground">
+              {results.relaxed_filters.map(f => FILTER_LABEL[f] ?? f).join(', ')}
+            </Text>
+            {' '}조건을 살짝 완화해서 찾았어요
+          </Text>
+        </View>
+      )}
 
       <FlatList
         data={results.games}

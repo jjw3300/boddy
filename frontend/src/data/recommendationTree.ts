@@ -6,7 +6,7 @@
 //              ├─B→ party_detail    ─┼→ play_style → player_count → play_time
 //              └─C→ coop_detail     ─┘   → difficulty → luck_vs_skill →
 //   interaction_intensity → rule_learning_time → replayability → downtime →
-//   theme → visual_component → table_space → (결과)
+//   (결과)
 //
 // scores의 tag는 major 태그('major:strategy' 등)이거나 recommendationTaxonomy의
 // GenreTag id, 혹은 facet 태그('players:2' 등)다. 장르 소분류 태그는
@@ -166,6 +166,7 @@ export const RECOMMENDATION_TREE: Record<string, QuestionNode> = {
     multiSelect: false,
     hardFilter: true,
     options: [
+      { id: '1', label: '1명', description: '혼자서 즐기는 솔로 플레이', scores: [{ tag: 'players:1', weight: 1 }], next: 'play_time' },
       { id: '2', label: '2명', description: '1:1 진검승부', scores: [{ tag: 'players:2', weight: 1 }], next: 'play_time' },
       { id: '3', label: '3~4명', description: '소그룹 파티', scores: [{ tag: 'players:3', weight: 1 }], next: 'play_time' },
       { id: '5', label: '5명 이상', description: '대인원 왁자지껄', scores: [{ tag: 'players:5', weight: 1 }], next: 'play_time' },
@@ -252,55 +253,15 @@ export const RECOMMENDATION_TREE: Record<string, QuestionNode> = {
     ],
   },
 
-  // ─── Q11(신규). 다운타임 / 턴 대기 시간 (Medium weight) ──────────────────
+  // ─── Q11(신규, 마지막). 다운타임 / 턴 대기 시간 (Medium weight) ──────────
   downtime: {
     id: 'downtime',
     title: '내 차례를 기다리는 시간은 어때야 하나요?',
-    subtitle: '다운타임',
+    subtitle: '다운타임 (마지막 질문이에요!)',
     multiSelect: false,
     options: [
-      { id: 'low', label: '지루한 건 싫어요', description: '동시 진행이나 스피디한 편이 좋아요', scores: [{ tag: 'downtime:low', weight: WEIGHT.MEDIUM }], next: 'theme' },
-      { id: 'high', label: '남의 턴 구경도 재밌어요', description: '느긋하게 즐겨도 괜찮아요', scores: [{ tag: 'downtime:high', weight: WEIGHT.MEDIUM }], next: 'theme' },
-    ],
-  },
-
-  // ─── Q12(신규). 테마 및 세계관 (Low weight) ──────────────────────────────
-  theme: {
-    id: 'theme',
-    title: '어떤 세계관이 끌리세요?',
-    subtitle: '테마',
-    multiSelect: false,
-    options: [
-      { id: 'none', label: '상관없음', description: '테마는 크게 안 봐요', scores: [], next: 'visual_component' },
-      { id: 'fantasy', label: 'SF / 판타지 / 마법', description: '이세계로 떠나는 느낌', scores: [{ tag: 'theme:fantasy', weight: WEIGHT.LOW }], next: 'visual_component' },
-      { id: 'economy', label: '경영 / 역사 / 건설', description: '현실적인 세계를 경영해요', scores: [{ tag: 'theme:economy', weight: WEIGHT.LOW }], next: 'visual_component' },
-      { id: 'cute', label: '귀여움 / 아기자기', description: '보기만 해도 힐링돼요', scores: [{ tag: 'theme:cute', weight: WEIGHT.LOW }], next: 'visual_component' },
-    ],
-  },
-
-  // ─── Q13(신규). 손맛 및 Visual (Low weight) ──────────────────────────────
-  visual_component: {
-    id: 'visual_component',
-    title: '구성물은 어떤 느낌이 좋아요?',
-    subtitle: '손맛 및 비주얼',
-    multiSelect: false,
-    options: [
-      { id: 'none', label: '상관없음', description: '구성물은 크게 안 봐요', scores: [], next: 'table_space' },
-      { id: 'fancy', label: '화려한 컴포넌트', description: '미니어처나 화려한 아트가 좋아요', scores: [{ tag: 'visual:fancy', weight: WEIGHT.LOW }], next: 'table_space' },
-      { id: 'tactile', label: '손맛 위주', description: '만지고 조작하는 재미가 좋아요', scores: [{ tag: 'visual:tactile', weight: WEIGHT.LOW }], next: 'table_space' },
-    ],
-  },
-
-  // ─── Q14(신규, 마지막). 플레이 공간 및 테이블 (Low weight) ───────────────
-  table_space: {
-    id: 'table_space',
-    title: '어디서 플레이할 예정이세요?',
-    subtitle: '플레이 공간 (마지막 질문이에요!)',
-    multiSelect: false,
-    options: [
-      { id: 'none', label: '상관없음', description: '공간은 크게 안 따져요', scores: [], next: null },
-      { id: 'small', label: '작은 카페 및 식탁', description: '좁은 공간에서도 OK', scores: [{ tag: 'space:small', weight: WEIGHT.LOW }], next: null },
-      { id: 'large', label: '넓은 보드게임용 테이블', description: '넉넉한 공간이 있어요', scores: [{ tag: 'space:large', weight: WEIGHT.LOW }], next: null },
+      { id: 'low', label: '지루한 건 싫어요', description: '동시 진행이나 스피디한 편이 좋아요', scores: [{ tag: 'downtime:low', weight: WEIGHT.MEDIUM }], next: null },
+      { id: 'high', label: '남의 턴 구경도 재밌어요', description: '느긋하게 즐겨도 괜찮아요', scores: [{ tag: 'downtime:high', weight: WEIGHT.MEDIUM }], next: null },
     ],
   },
 };

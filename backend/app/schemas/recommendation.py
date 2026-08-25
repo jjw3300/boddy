@@ -24,8 +24,12 @@ class GameSummary(BaseModel):
     weight: float  # BGG 복잡도 (1~5)
     description: str | None
     game_type: Literal["luck", "dexterity", "party", "strategy"] | None = None
+    rank: int | None = None  # 이번 추천 결과 안에서의 순위 (1위가 가장 잘 맞음)
 
 
 class RecommendationResponse(BaseModel):
     games: list[GameSummary]
     total: int
+    # 조건에 맞는 게임이 없어서 완화한 필터 목록 (예: ["play_time", "difficulty"])
+    # 비어있으면 사용자가 고른 조건 그대로 찾은 것.
+    relaxed_filters: list[str] = []

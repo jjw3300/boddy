@@ -27,11 +27,13 @@ export interface GameSummary {
   weight: number;
   description: string | null;
   game_type: GameType | null;
+  rank: number | null;
 }
 
 export interface RecommendationResponse {
   games: GameSummary[];
   total: number;
+  relaxed_filters: string[];
 }
 
 export interface CafeSummary {
