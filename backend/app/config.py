@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     # https://developers.kakao.com 에서 앱 등록 후 발급받는 REST API 키.
     kakao_rest_api_key: str | None = None
 
+    # https://www.deepl.com/pro-api 에서 무료 가입 후 발급받는 API 키 (":fx"로
+    # 끝나면 무료 플랜 — api-free.deepl.com 호스트를 자동으로 쓴다).
+    deepl_api_key: str | None = None
+
     model_config = {"env_file": ".env"}
 
 

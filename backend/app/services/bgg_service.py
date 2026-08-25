@@ -6,6 +6,7 @@ from typing import Literal
 from app.config import settings
 from app.schemas.recommendation import GameSummary, RecommendationFilter
 from app.services import cache
+from app.services.translate_service import translate_to_korean
 
 # ───────────────────────────── 상수 ─────────────────────────────
 
@@ -36,13 +37,47 @@ GAME_TYPE_CATEGORY_IDS = {
 MAX_RETRIES = 3
 RETRY_DELAY = 2.0  # 초
 
+# /hot(트렌딩 ~50개)만 쓰면 그 주의 인기작에만 풀이 쏠린다. BGG API에는
+# "장르/조건으로 검색"하는 엔드포인트가 없어서(이름 검색만 가능) 대신 여러
+# 장르·메커니즘을 아우르는 유명 보드게임 제목을 미리 정해두고 /search로 BGG
+# ID를 찾아 풀에 합친다 — 새 API나 토큰 없이 기존 엔드포인트만으로 풀을 넓히는
+# 방법. 그래도 부족하면(여전히 필터 조합이 자주 0건이면) BGG 랭킹 데이터셋을
+# 통째로 DB에 적재하는 방식으로 넘어갈 것.
+SEED_GAME_TITLES = [
+    # 전략 — 일꾼 놓기 / 덱빌딩 / 타일 놓기 / 4X / 추상 / 엔진빌딩 등
+    "Terraforming Mars", "Brass: Birmingham", "Gloomhaven", "Twilight Imperium",
+    "Scythe", "Ark Nova", "Great Western Trail", "Puerto Rico", "Agricola",
+    "Caverna", "Viticulture", "Wingspan", "Everdell", "Terra Mystica",
+    "Gaia Project", "Through the Ages", "Concordia", "Power Grid", "El Grande",
+    "Tigris & Euphrates", "Hive", "Onitama", "Star Realms", "Dominion", "Clank!",
+    "7 Wonders", "Ticket to Ride", "Carcassonne", "Catan",
+    # 파티 / 심리 / 상호작용
+    "Codenames", "One Night Ultimate Werewolf", "Secret Hitler", "Coup",
+    "Avalon", "Sheriff of Nottingham", "Skull", "Bang!", "Two Rooms and a Boom",
+    "Spyfall", "Dixit", "Just One", "Wavelength", "Poetry for Neanderthals",
+    # 협동 / 피지컬 / 기타
+    "Pandemic", "Pandemic Legacy", "Forbidden Island", "Forbidden Desert",
+    "Spirit Island", "The Crew", "Hanabi", "Mysterium",
+    "Betrayal at House on the Hill", "Flamme Rouge", "Kingdomino", "Azul",
+    "Splendor", "Sushi Go", "King of Tokyo", "Love Letter", "No Thanks!",
+    "Camel Up", "Incan Gold",
+]
+
 
 # ───────────────────────────── 공개 API ─────────────────────────────
 
 async def search_games(filters: RecommendationFilter) -> list[GameSummary]:
     """필터 조건에 맞는 게임 목록 반환 (최대 20개)."""
-    raw_games = await _fetch_hot_games()
-    game_ids = [g["id"] for g in raw_games[:50]]
+    hot_games, seed_games = await asyncio.gather(_fetch_hot_games(), _fetch_seed_games())
+
+    seen_ids: set[str] = set()
+    merged: list[dict] = []
+    for g in hot_games + seed_games:
+        if g["id"] not in seen_ids:
+            seen_ids.add(g["id"])
+            merged.append(g)
+
+    game_ids = [g["id"] for g in merged]
     detailed_games = await _fetch_game_details(game_ids)
     return _apply_filters(detailed_games, filters)[:20]
 
@@ -93,6 +128,11 @@ async def fetch_game_detail(bgg_id: int) -> GameSummary | None:
     detected_type = _detect_game_type(game)
     summary = _parse_game(game, detected_type, include_description=True)
 
+    if summary.description:
+        translated = await translate_to_korean(summary.description)
+        if translated:
+            summary.description = translated
+
     cache.set(cache_key, summary, ttl=60 * 60 * 6)  # 6시간 캐시
     return summary
 
@@ -114,6 +154,40 @@ async def _fetch_hot_games() -> list[dict]:
 
     result = [{"id": item["@id"], "name": item["name"]["@value"]} for item in items]
     cache.set(cache_key, result, ttl=60 * 30)  # 30분 캐시
+    return result
+
+
+async def _fetch_seed_games() -> list[dict]:
+    """SEED_GAME_TITLES를 이름 검색으로 BGG ID에 매핑해 캐싱해둔다.
+    고정 목록이라 자주 안 바뀌므로 TTL을 길게(24시간) 잡는다."""
+    cache_key = "seed_games"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    semaphore = asyncio.Semaphore(5)
+
+    async def resolve(title: str) -> dict | None:
+        async with semaphore:
+            try:
+                results = await search_games_by_name(title)
+            except Exception:
+                return None
+            if not results:
+                return None
+            # BGG 검색 결과의 첫 번째가 항상 원하는 게임은 아니다(리스킨/확장판/
+            # 이름만 비슷한 무관한 게임이 먼저 나올 수 있음) — 이름이 정확히
+            # 일치하는 결과를 우선하고, 없으면 첫 번째로 폴백한다.
+            exact = next(
+                (r for r in results if r["name"].strip().lower() == title.strip().lower()),
+                None,
+            )
+            best = exact or results[0]
+            return {"id": str(best["bgg_id"]), "name": best["name"]}
+
+    resolved = await asyncio.gather(*(resolve(t) for t in SEED_GAME_TITLES))
+    result = [r for r in resolved if r is not None]
+    cache.set(cache_key, result, ttl=60 * 60 * 24)  # 24시간 캐시
     return result
 
 
