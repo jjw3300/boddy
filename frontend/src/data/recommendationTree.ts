@@ -50,8 +50,12 @@ export interface QuestionNode {
   id: string;
   title: string;
   subtitle: string;
-  /** true면 체크박스로 여러 옵션을 동시에 선택 가능 ("다음" 버튼으로 확정) */
+  /** true면 여러 옵션을 동시에 선택 가능 ("다음" 버튼으로 확정) */
   multiSelect: boolean;
+  /** 옵션이 많은 노드(장르 소분류)만 true — 카드 대신 칩(태그) UI로 압축해서
+   *  보여준다. multiSelect이지만 옵션이 몇 개 안 되는 노드는 카드가 더
+   *  직관적이라 이 플래그를 켜지 않는다. */
+  compact?: boolean;
   /** 인원수/시간처럼 결과에서 아예 제외하는 하드 필터인지 (vs 가중치 스코어링) */
   hardFilter?: boolean;
   options: AnswerOption[];
@@ -121,6 +125,7 @@ export const RECOMMENDATION_TREE: Record<string, QuestionNode> = {
     title: '전략 게임 중 선호하는 메커니즘은?',
     subtitle: '재밌게 즐겼던 방식을 모두 골라주세요 (복수 선택 가능)',
     multiSelect: true,
+    compact: true,
     options: genreOptionsFor('strategy', 'play_style'),
   },
   party_detail: {
@@ -128,6 +133,7 @@ export const RECOMMENDATION_TREE: Record<string, QuestionNode> = {
     title: '어떤 형태의 상호작용을 원하시나요?',
     subtitle: '좋아하는 긴장감을 모두 골라주세요 (복수 선택 가능)',
     multiSelect: true,
+    compact: true,
     options: genreOptionsFor('party', 'play_style'),
   },
   coop_detail: {
@@ -135,6 +141,7 @@ export const RECOMMENDATION_TREE: Record<string, QuestionNode> = {
     title: '어떤 협력/가벼운 방식을 좋아하세요?',
     subtitle: '편하게 즐기고 싶은 결을 모두 골라주세요 (복수 선택 가능)',
     multiSelect: true,
+    compact: true,
     options: genreOptionsFor('dexterity', 'play_style'),
   },
 

@@ -34,6 +34,7 @@ export default function RecommendationScreen({ navigation }: Props) {
   const [flow, setFlow] = useState<FlowState>(createInitialFlowState());
   const [history, setHistory] = useState<FlowState[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [activeOptionId, setActiveOptionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +63,7 @@ export default function RecommendationScreen({ navigation }: Props) {
     setHistory(h => [...h, flow]);
     const next = advanceFlow({ ...flow, currentNodeId }, ids);
     setSelectedIds([]);
+    setActiveOptionId(null);
     if (next.currentNodeId === null) {
       submit(next);
       return;
@@ -75,6 +77,8 @@ export default function RecommendationScreen({ navigation }: Props) {
       confirmSelection([optionId]);
       return;
     }
+    // 칩을 누르면 선택 토글과 별개로 그 항목의 설명을 아래에 띄워준다
+    setActiveOptionId(optionId);
     // "상관없음"은 다른 선택과 공존할 수 없다 — 고르면 나머지를 다 지우고,
     // "상관없음"이 이미 선택된 상태에서 다른 걸 고르면 "상관없음"을 뺀다.
     setSelectedIds(prev => {
@@ -96,6 +100,7 @@ export default function RecommendationScreen({ navigation }: Props) {
     setFlow(history[history.length - 1]);
     setHistory(h => h.slice(0, -1));
     setSelectedIds([]);
+    setActiveOptionId(null);
   }
 
   if (loading) {
@@ -166,57 +171,117 @@ export default function RecommendationScreen({ navigation }: Props) {
         <Text className="text-sm font-semibold text-muted-foreground">{node.subtitle}</Text>
       </View>
 
-      {/* 선택지 — 80% 축소 (padding 24→19, 라벨 24→19, 설명 18→14, gap 14→11) */}
-      <ScrollView contentContainerClassName="gap-[11px] pb-8" showsVerticalScrollIndicator={false}>
-        {node.options.map((option, i) => {
-          const isSelected = selectedIds.includes(option.id);
-          const accentColor = ACCENT_PALETTE[i % ACCENT_PALETTE.length];
-          return (
-            <TouchableOpacity
-              key={option.id}
-              onPress={() => toggleOption(option.id)}
-              activeOpacity={0.85}
-            >
-              <View
-                className={cn(
-                  'flex-row items-stretch overflow-hidden rounded-xl border bg-card',
-                  isSelected ? 'border-primary' : 'border-border',
-                )}
-              >
-                <View className={cn('w-[6px]', ACCENT_BAR_CLASS[accentColor])} />
-                <View className="flex-1 px-[19px] py-[19px]">
-                  <Text className="mb-1 text-[19px] font-extrabold text-foreground">{option.label}</Text>
-                  <Text className="text-[14px] font-semibold text-muted-foreground">{option.description}</Text>
-                </View>
-                {node.multiSelect && (
-                  <View className="items-center justify-center pr-4">
+      {node.compact ? (
+        <>
+          {/* 옵션이 많은 노드(장르 소분류)만 칩(태그) 형태로 압축, 탭하면 아래에 설명이 뜬다 */}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-3">
+            <View className="flex-row flex-wrap gap-2">
+              {node.options.map(option => {
+                const isSelected = selectedIds.includes(option.id);
+                const isNone = option.id === 'none';
+                return (
+                  <TouchableOpacity key={option.id} onPress={() => toggleOption(option.id)} activeOpacity={0.85}>
                     <View
                       className={cn(
-                        'h-[22px] w-[22px] items-center justify-center rounded-md border-2',
-                        isSelected ? 'border-primary bg-primary' : 'border-border bg-transparent',
+                        'rounded-full border px-4 py-2.5',
+                        isSelected
+                          ? 'border-primary bg-primary'
+                          : isNone
+                            ? 'border-primary/40 bg-accent'
+                            : 'border-border bg-card',
                       )}
                     >
-                      {isSelected && <Text className="text-xs font-extrabold text-primary-foreground">✓</Text>}
+                      <Text
+                        className={cn(
+                          'text-[14px] font-bold',
+                          isSelected
+                            ? 'text-primary-foreground'
+                            : isNone
+                              ? 'text-accent-foreground'
+                              : 'text-foreground',
+                        )}
+                      >
+                        {option.label}
+                      </Text>
                     </View>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-      {/* 다중선택 노드는 확정 버튼으로 다음 질문으로 넘어간다 */}
-      {node.multiSelect && (
-        <View className="pb-5 pt-2">
-          <Button
-            label={selectedIds.length > 0 ? `${selectedIds.length}개 선택 · 다음` : '하나 이상 골라주세요'}
-            variant="gradient"
-            disabled={selectedIds.length === 0}
-            onPress={() => confirmSelection(selectedIds)}
-            className="h-14 rounded-xl"
-          />
-        </View>
+            {activeOptionId && (
+              <View className="mt-4 rounded-lg bg-muted px-3.5 py-3">
+                <Text className="mb-0.5 text-[12px] font-extrabold text-foreground">
+                  {node.options.find(o => o.id === activeOptionId)?.label}
+                </Text>
+                <Text className="text-[12px] font-medium text-muted-foreground">
+                  {node.options.find(o => o.id === activeOptionId)?.description}
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+
+          <View className="pb-5 pt-2">
+            <Button
+              label={selectedIds.length > 0 ? `${selectedIds.length}개 선택 · 다음` : '하나 이상 골라주세요'}
+              variant="gradient"
+              disabled={selectedIds.length === 0}
+              onPress={() => confirmSelection(selectedIds)}
+              className="h-14 rounded-xl"
+            />
+          </View>
+        </>
+      ) : (
+        <>
+          {/* 옵션이 적은 노드는 카드가 더 직관적 — multiSelect면 체크박스 +
+              확정 버튼, 아니면 탭 즉시 다음으로 넘어간다 */}
+          <ScrollView contentContainerClassName="gap-[11px] pb-8" showsVerticalScrollIndicator={false}>
+            {node.options.map((option, i) => {
+              const isSelected = selectedIds.includes(option.id);
+              const accentColor = ACCENT_PALETTE[i % ACCENT_PALETTE.length];
+              return (
+                <TouchableOpacity key={option.id} onPress={() => toggleOption(option.id)} activeOpacity={0.85}>
+                  <View
+                    className={cn(
+                      'flex-row items-stretch overflow-hidden rounded-xl border bg-card',
+                      isSelected ? 'border-primary' : 'border-border',
+                    )}
+                  >
+                    <View className={cn('w-[6px]', ACCENT_BAR_CLASS[accentColor])} />
+                    <View className="flex-1 px-[19px] py-[19px]">
+                      <Text className="mb-1 text-[19px] font-extrabold text-foreground">{option.label}</Text>
+                      <Text className="text-[14px] font-semibold text-muted-foreground">{option.description}</Text>
+                    </View>
+                    {node.multiSelect && (
+                      <View className="items-center justify-center pr-4">
+                        <View
+                          className={cn(
+                            'h-[22px] w-[22px] items-center justify-center rounded-md border-2',
+                            isSelected ? 'border-primary bg-primary' : 'border-border bg-transparent',
+                          )}
+                        >
+                          {isSelected && <Text className="text-xs font-extrabold text-primary-foreground">✓</Text>}
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {node.multiSelect && (
+            <View className="pb-5 pt-2">
+              <Button
+                label={selectedIds.length > 0 ? `${selectedIds.length}개 선택 · 다음` : '하나 이상 골라주세요'}
+                variant="gradient"
+                disabled={selectedIds.length === 0}
+                onPress={() => confirmSelection(selectedIds)}
+                className="h-14 rounded-xl"
+              />
+            </View>
+          )}
+        </>
       )}
     </SafeAreaView>
   );
