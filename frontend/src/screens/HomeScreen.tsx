@@ -109,7 +109,7 @@ export default function HomeScreen({ navigation }: Props) {
               </View>
               <View className="flex-1">
                 <Text className="mb-1 text-lg font-extrabold text-white">나에게 맞는 게임 찾기</Text>
-                <Text className="text-[13px] font-semibold text-white/90">인원수 · 스타일 · 시간 5문항이면 끝</Text>
+                <Text className="text-[13px] font-semibold text-white/90">지금 할만한 보드게임을 찾아보세요</Text>
               </View>
               <ChevronRightIcon size={22} color="#FFFFFF" />
             </View>
@@ -130,7 +130,7 @@ export default function HomeScreen({ navigation }: Props) {
               <RankedGameRow
                 key={game.bgg_id}
                 game={game}
-                onPress={() => navigation.navigate('GameDetail', { bggId: game.bgg_id, game })}
+                onPress={() => navigation.navigate('GameDetail', { bggId: game.bgg_id })}
               />
             ))}
           </View>
